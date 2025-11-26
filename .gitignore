@@ -43,6 +43,10 @@ next-env.d.ts
 # uploads (local filesystem storage - fallback)
 /public/uploads/
 
+# PM2 logs
+logs/
+*.log
+
 # Python
 __pycache__/
 *.py[cod]
