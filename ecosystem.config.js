@@ -1,3 +1,5 @@
+require('dotenv').config(); // Add at the top
+
 module.exports = {
   apps: [
     {
@@ -12,10 +14,16 @@ module.exports = {
       env: {
         NODE_ENV: "development",
         PORT: 3000,
+        MONGODB_URI: process.env.MONGODB_URI,
+        JWT_SECRET: process.env.JWT_SECRET,
+        JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
       },
       env_production: {
         NODE_ENV: "production",
         PORT: 3000,
+        MONGODB_URI: process.env.MONGODB_URI,
+        JWT_SECRET: process.env.JWT_SECRET,
+        JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "7d",
       },
       error_file: "./logs/pm2-error.log",
       out_file: "./logs/pm2-out.log",

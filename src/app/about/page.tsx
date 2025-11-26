@@ -13,7 +13,7 @@ const About = () => {
       name: "Sarah Johnson",
       role: "CEO & Founder",
       bio: "Former Seek executive with 15+ years in Australian recruitment and tech innovation",
-      avatar : "/images/Sarah.png",
+      avatar : "/images/sarah.PNG",
       location: "Sydney, NSW",
       expertise: ["Recruitment Tech", "Business Strategy", "Leadership"]
     },
@@ -21,7 +21,7 @@ const About = () => {
       name: "Michael Chen",
       role: "CTO",
       bio: "Ex-Atlassian engineer passionate about AI and scalable systems for Australian businesses",
-avatar : "/images/micheal.png",
+avatar : "/images/micheal.PNG",
       location: "Melbourne, VIC",
       expertise: ["AI/ML", "System Architecture", "Product Development"]
     },
@@ -29,7 +29,7 @@ avatar : "/images/micheal.png",
       name: "Lisa Thompson",
       role: "Head of Partnerships",
       bio: "Former government liaison with deep connections across Australian industry sectors",
-      avatar : "/images/lisa.png",
+      avatar : "/images/lisa.PNG",
       location: "Brisbane, QLD",
       expertise: ["Industry Relations", "Business Development", "Government"]
     },
