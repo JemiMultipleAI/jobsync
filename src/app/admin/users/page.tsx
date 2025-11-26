@@ -200,7 +200,7 @@ export default function UsersPage() {
         </div>
       ) : (
         <DataTable
-          data={users}
+          data={users as unknown as Record<string, unknown>[]}
           columns={[
             {
               key: "name",

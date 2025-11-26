@@ -14,9 +14,10 @@ const updateApplicationSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -24,7 +25,7 @@ export async function GET(
 
     await connectDB();
 
-    const application = await Application.findById(params.id)
+    const application = await Application.findById(id)
       .populate("job", "title company location type salary industry description")
       .populate({
         path: "job",
@@ -66,9 +67,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -79,7 +81,7 @@ export async function PUT(
     const body = await request.json();
     const validatedData = updateApplicationSchema.parse(body);
 
-    const application = await Application.findById(params.id);
+    const application = await Application.findById(id);
 
     if (!application) {
       return NextResponse.json(
@@ -115,7 +117,7 @@ export async function PUT(
     }
 
     const updatedApplication = await Application.findByIdAndUpdate(
-      params.id,
+      id,
       { $set: updateData },
       { new: true }
     )
@@ -136,7 +138,7 @@ export async function PUT(
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
@@ -151,9 +153,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -161,7 +164,7 @@ export async function DELETE(
 
     await connectDB();
 
-    const application = await Application.findById(params.id);
+    const application = await Application.findById(id);
 
     if (!application) {
       return NextResponse.json(
@@ -183,7 +186,7 @@ export async function DELETE(
       $inc: { applicationCount: -1 },
     });
 
-    await Application.findByIdAndDelete(params.id);
+    await Application.findByIdAndDelete(id);
 
     return NextResponse.json({
       message: "Application withdrawn successfully",

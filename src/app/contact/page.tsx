@@ -154,7 +154,7 @@ const Contact = () => {
         <div className="relative max-w-7xl mx-auto px-6 text-center">
           <h1 className="text-5xl md:text-6xl font-bold mb-6">Get in Touch</h1>
           <p className="text-xl md:text-2xl opacity-90 max-w-2xl mx-auto">
-            We're here to help. Reach out to our team for support, questions, or partnerships.
+            We&apos;re here to help. Reach out to our team for support, questions, or partnerships.
           </p>
         </div>
       </section>
@@ -183,7 +183,7 @@ const Contact = () => {
         <div className="max-w-4xl mx-auto px-6">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4 text-gray-900">Send Us a Message</h2>
-            <p className="text-lg text-gray-600">Fill out the form below and we'll get back to you as soon as possible.</p>
+            <p className="text-lg text-gray-600">Fill out the form below and we&apos;ll get back to you as soon as possible.</p>
           </div>
 
           <Card className="border-gray-200 shadow-lg">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter  } from "next/navigation"
+// import { useRouter  } from "next/navigation" // Removed unused import
 import { useForm  } from "react-hook-form"
 import { zodResolver  } from "@hookform/resolvers/zod"
 import * as z from "zod";
@@ -38,7 +38,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const router = useRouter();
+  // const router = useRouter(); // Removed unused variable
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -5,7 +5,7 @@
 
 export interface ApiError {
   error: string;
-  details?: any;
+  details?: unknown;
 }
 
 class ApiClient {
@@ -39,7 +39,7 @@ class ApiClient {
       }
 
       return await response.json();
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (error instanceof Error) {
         throw error;
       }
@@ -53,7 +53,7 @@ class ApiClient {
   }
 
   // POST request
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: "POST",
       body: data ? JSON.stringify(data) : undefined,
@@ -61,7 +61,7 @@ class ApiClient {
   }
 
   // PUT request
-  async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: unknown): Promise<T> {
     return this.request<T>(endpoint, {
       method: "PUT",
       body: data ? JSON.stringify(data) : undefined,

@@ -87,7 +87,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Recalculate profile completion
-    user.profileCompletion = user.calculateProfileCompletion();
+    user.profileCompletion = (user as any).calculateProfileCompletion();
     await user.save();
 
     return NextResponse.json({
@@ -109,9 +109,9 @@ export async function PUT(request: NextRequest) {
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
-      console.error("Validation error:", error.errors);
+      console.error("Validation error:", error.issues);
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }

@@ -34,7 +34,7 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const [jobsRes, companiesRes, usersRes] = await Promise.all([
+      const [jobsRes, companiesRes] = await Promise.all([
         apiClient.get<{ jobs: any[]; pagination: any }>("/api/jobs?limit=100"),
         apiClient.get<{ companies: any[]; pagination: any }>("/api/companies?limit=100"),
         // Note: We don't have a users API yet, so we'll skip it for now

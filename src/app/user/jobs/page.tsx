@@ -87,14 +87,15 @@ export default function BrowseJobsPage() {
         params.append("search", searchQuery);
       }
 
-      const data = await apiClient.get<{ jobs: Job[]; pagination: any }>(
+      const data = await apiClient.get<{ jobs: Job[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
         `/api/jobs?${params.toString()}`
       );
       setJobs(data.jobs);
       setTotalPages(data.pagination.pages);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching jobs:", error);
-      toast.error(error.message || "Failed to load jobs");
+      const errorMessage = error instanceof Error ? error.message : "Failed to load jobs";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -122,7 +123,7 @@ export default function BrowseJobsPage() {
 
   const formatSalary = (salary?: { min?: number; max?: number; currency?: string; period?: string }) => {
     if (!salary || (!salary.min && !salary.max)) return "Salary not specified";
-    const currency = salary.currency || "AUD";
+    // const currency = salary.currency || "AUD"; // Removed unused variable
     const period = salary.period === "year" ? "year" : salary.period === "month" ? "month" : "hour";
     if (salary.min && salary.max) {
       return `$${salary.min.toLocaleString()} - $${salary.max.toLocaleString()}/${period}`;

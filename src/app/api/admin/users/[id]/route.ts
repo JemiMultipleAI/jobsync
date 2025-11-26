@@ -14,9 +14,10 @@ const updateUserSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -30,7 +31,7 @@ export async function GET(
 
     await connectDB();
 
-    const user = await User.findById(params.id).select("-password").lean();
+    const user = await User.findById(id).select("-password").lean();
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -48,9 +49,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -68,7 +70,7 @@ export async function PUT(
     const validatedData = updateUserSchema.parse(body);
 
     const user = await User.findByIdAndUpdate(
-      params.id,
+      id,
       { $set: validatedData },
       { new: true, runValidators: true }
     ).select("-password");
@@ -78,7 +80,7 @@ export async function PUT(
     }
 
     // Recalculate profile completion
-    user.profileCompletion = user.calculateProfileCompletion();
+    user.profileCompletion = (user as any).calculateProfileCompletion();
     await user.save();
 
     return NextResponse.json({
@@ -88,7 +90,7 @@ export async function PUT(
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
@@ -103,9 +105,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -120,14 +123,14 @@ export async function DELETE(
     await connectDB();
 
     // Prevent deleting yourself
-    if (params.id === authResult.user!.userId) {
+    if (id === authResult.user!.userId) {
       return NextResponse.json(
         { error: "You cannot delete your own account" },
         { status: 400 }
       );
     }
 
-    const user = await User.findByIdAndDelete(params.id);
+    const user = await User.findByIdAndDelete(id);
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

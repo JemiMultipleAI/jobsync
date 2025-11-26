@@ -23,7 +23,8 @@ import { Wrench,
   Building, 
   Clock, 
   ArrowRight,
-  DollarSign
+  DollarSign,
+  Briefcase
 } from "lucide-react"
 import Image from "next/image";
 
@@ -56,7 +57,7 @@ export default function JobsPage() {
   const [selectedLocation, setSelectedLocation] = useState("All");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
+  const [page] = useState(1); // Page state for future pagination
 
   // Job categories with Australian context
   const jobCategories = [
@@ -98,13 +99,14 @@ export default function JobsPage() {
         params.append("search", searchTerm);
       }
 
-      const data = await apiClient.get<{ jobs: Job[]; pagination: any }>(
+      const data = await apiClient.get<{ jobs: Job[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
         `/api/jobs?${params.toString()}`
       );
       setJobs(data.jobs);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error fetching jobs:", error);
-      toast.error(error.message || "Failed to load jobs");
+      const errorMessage = error instanceof Error ? error.message : "Failed to load jobs";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -112,7 +114,7 @@ export default function JobsPage() {
 
   const formatSalary = (salary?: { min?: number; max?: number; currency?: string; period?: string }) => {
     if (!salary || (!salary.min && !salary.max)) return "Salary not specified";
-    const currency = salary.currency || "AUD";
+    // const currency = salary.currency || "AUD"; // Removed unused variable
     const period = salary.period === "year" ? "year" : salary.period === "month" ? "month" : "hour";
     if (salary.min && salary.max) {
       return `$${salary.min.toLocaleString()} - $${salary.max.toLocaleString()}/${period}`;

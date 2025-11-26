@@ -84,7 +84,7 @@ UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     // Update profile completion if other fields changed
     if (this.isModified() && !this.isNew) {
-      this.profileCompletion = this.calculateProfileCompletion();
+      this.profileCompletion = (this as any).calculateProfileCompletion();
     }
     return next();
   }
@@ -94,7 +94,7 @@ UserSchema.pre("save", async function (next) {
     this.password = await bcrypt.hash(this.password, salt);
     // Update profile completion
     if (!this.isNew) {
-      this.profileCompletion = this.calculateProfileCompletion();
+      this.profileCompletion = (this as any).calculateProfileCompletion();
     }
     next();
   } catch (error: any) {

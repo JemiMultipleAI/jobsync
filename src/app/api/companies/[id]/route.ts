@@ -20,12 +20,13 @@ const updateCompanySchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
 
-    const company = await Company.findById(params.id)
+    const company = await Company.findById(id)
       .populate("createdBy", "name email")
       .lean();
 
@@ -48,9 +49,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -68,7 +70,7 @@ export async function PUT(
     const validatedData = updateCompanySchema.parse(body);
 
     const company = await Company.findByIdAndUpdate(
-      params.id,
+      id,
       { $set: validatedData },
       { new: true, runValidators: true }
     )
@@ -89,7 +91,7 @@ export async function PUT(
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
@@ -104,9 +106,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -120,7 +123,7 @@ export async function DELETE(
 
     await connectDB();
 
-    const company = await Company.findByIdAndDelete(params.id);
+    const company = await Company.findByIdAndDelete(id);
 
     if (!company) {
       return NextResponse.json(

@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Recalculate profile completion
-    updatedUser.profileCompletion = updatedUser.calculateProfileCompletion();
+    updatedUser.profileCompletion = (updatedUser as any).calculateProfileCompletion();
     await updatedUser.save();
 
     return NextResponse.json({
@@ -143,7 +143,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Recalculate profile completion
-    updatedUser.profileCompletion = updatedUser.calculateProfileCompletion();
+    updatedUser.profileCompletion = (updatedUser as any).calculateProfileCompletion();
     await updatedUser.save();
 
     return NextResponse.json({

@@ -195,7 +195,7 @@ export default function CompaniesPage() {
         </div>
       ) : (
         <DataTable
-          data={companies}
+          data={companies as unknown as Record<string, unknown>[]}
           columns={[
             {
               key: "name",

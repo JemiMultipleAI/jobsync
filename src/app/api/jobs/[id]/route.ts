@@ -27,12 +27,13 @@ const updateJobSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     await connectDB();
 
-    const job = await Job.findById(params.id)
+    const job = await Job.findById(id)
       .populate("company", "name logo industry location description website")
       .populate("postedBy", "name email")
       .lean();
@@ -53,9 +54,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -73,7 +75,7 @@ export async function PUT(
     const validatedData = updateJobSchema.parse(body);
 
     const job = await Job.findByIdAndUpdate(
-      params.id,
+      id,
       { $set: validatedData },
       { new: true, runValidators: true }
     )
@@ -92,7 +94,7 @@ export async function PUT(
   } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation error", details: error.errors },
+        { error: "Validation error", details: error.issues },
         { status: 400 }
       );
     }
@@ -107,9 +109,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
       return authResult.error;
@@ -123,7 +126,7 @@ export async function DELETE(
 
     await connectDB();
 
-    const job = await Job.findByIdAndDelete(params.id);
+    const job = await Job.findByIdAndDelete(id);
 
     if (!job) {
       return NextResponse.json({ error: "Job not found" }, { status: 404 });

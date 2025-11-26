@@ -43,7 +43,7 @@ export async function generateTokenEdge(payload: JWTPayload): Promise<string> {
   const secret = new TextEncoder().encode(JWT_SECRET);
   const expiresInSeconds = expiresInToSeconds(JWT_EXPIRES_IN);
 
-  const token = await new SignJWT(payload)
+  const token = await new SignJWT(payload as unknown as Record<string, unknown>)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(Math.floor(Date.now() / 1000) + expiresInSeconds)
@@ -62,7 +62,7 @@ export async function verifyTokenEdge(token: string): Promise<JWTPayload> {
       algorithms: ["HS256"],
     });
 
-    return payload as JWTPayload;
+    return payload as unknown as JWTPayload;
   } catch (error: any) {
     if (process.env.NODE_ENV === "development") {
       console.error("[JWT Verification Error (Edge)]", error.message);
