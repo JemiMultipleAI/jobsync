@@ -111,21 +111,24 @@ UserSchema.methods.comparePassword = async function (
 
 // Calculate profile completion
 UserSchema.methods.calculateProfileCompletion = function (): number {
-  const fields = [
-    this.name,
-    this.email,
-    this.bio,
-    this.phone,
-    this.location,
-    this.skills?.length > 0,
-    this.profileImage,
-    this.resume,
+  // Explicitly check each field to ensure proper detection
+  const fieldChecks = [
+    !!this.name && this.name.trim().length > 0, // Name is required and should be non-empty
+    !!this.email && this.email.trim().length > 0, // Email is required and should be non-empty
+    !!this.bio && this.bio.trim().length > 0, // Bio is optional
+    !!this.phone && this.phone.trim().length > 0, // Phone is optional
+    !!this.location && this.location.trim().length > 0, // Location is optional
+    Array.isArray(this.skills) && this.skills.length > 0, // Skills array should exist and have items
+    !!this.profileImage && this.profileImage.trim().length > 0, // Profile image is optional
+    !!this.resume && this.resume.trim().length > 0, // Resume is optional
   ];
 
-  const completedFields = fields.filter(Boolean).length;
-  const completion = Math.round((completedFields / fields.length) * 100);
+  const completedFields = fieldChecks.filter(Boolean).length;
+  const totalFields = fieldChecks.length;
+  const completion = Math.round((completedFields / totalFields) * 100);
 
-  return completion;
+  // Ensure completion is between 0 and 100
+  return Math.min(100, Math.max(0, completion));
 };
 
 const User: Model<IUser> =

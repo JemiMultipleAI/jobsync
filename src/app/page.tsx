@@ -5,19 +5,20 @@
 import AutoSlider from "@/components/ui/AutoSlider";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Shield } from "lucide-react";
-import { Card,  CardContent  } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image";
-import { MapPin, 
-  Clock, 
-  DollarSign, 
-  Star, 
-  ArrowRight, 
-  FileCheck, 
-  Bot, 
-  Cloud, 
-  Users, 
-  BadgeCheck, 
- } from "lucide-react"
+import {
+  MapPin,
+  Clock,
+  DollarSign,
+  Star,
+  ArrowRight,
+  FileCheck,
+  Bot,
+  Cloud,
+  Users,
+  BadgeCheck,
+} from "lucide-react"
 
 export default function Home() {
   const stats = [
@@ -160,25 +161,22 @@ export default function Home() {
             <div className="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm rounded-full px-6 py-3 mb-6">
               <Shield className="h-5 w-5" />
               <span className="font-semibold">
-                Australia&apos;s Verified Workforce Platform
+                One Profile, Verified Once, Used Everywhere
               </span>
             </div>
           </div>
 
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            Where Careers and{" "}
+            Australia&apos;s Verified
             <span className="bg-gradient-to-r from-white to-gray-200 bg-clip-text text-transparent">
-              Credentials Unite
+              <br />Workforce Platform
             </span>
           </h1>
 
           <p className="text-xl md:text-2xl mb-8 max-w-4xl mx-auto leading-relaxed">
-            <strong>JobSync</strong> is transforming how Australians work,
-            verify, and connect. It&apos;s more than a job site—it&apos;s a secure
-            ecosystem that brings <strong>verified candidates</strong>,{" "}
-            <strong>certified qualifications</strong>, and{" "}
-            <strong>trusted employers</strong> together on one powerful
-            platform.
+            <strong>A single profile. Verified once. Accepted everywhere.</strong><br />
+            Workers, employers, and agencies connect through one compliant, portable,<br />
+            cloud-backed system that keeps credentials current and hiring friction-free.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
@@ -187,13 +185,15 @@ export default function Home() {
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <Button className="bg-transparent border-2 border-white text-white hover:bg-white/20 font-semibold px-8 py-6 text-lg rounded-full transition-all duration-300">
-              For Employers & Agencies
+              For Employers
             </Button>
           </div>
 
-          <p className="text-lg md:text-xl opacity-90">
-            Built in Australia. Trusted globally. Powered by verification.
-          </p>
+          <ul className="text-lg md:text-xl opacity-90">
+            <li>Free for workers</li>
+            <li>Automatic license & certificate expiry tracking</li>
+            <li>Industry-ready compliance from day one</li>
+          </ul>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto bg-white/20 backdrop-blur-sm rounded-2xl p-8 border border-white/30 mt-12">
             {stats.map((stat, index) => (
@@ -321,7 +321,7 @@ export default function Home() {
         </div>
       </section>
 
- 
+
 
 
       {/* How It Works Section */}
@@ -392,92 +392,92 @@ export default function Home() {
       <section className="py-24 bg-gray-50">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-          
 
 
-  
-   {/* For Individuals Section */}
-</div>
+
+
+            {/* For Individuals Section */}
+          </div>
         </div>
       </section>
       <section className="py-24 bg-white">
-  <div className="max-w-6xl mx-auto px-6">
-    <div className="text-center mb-16">
-      <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-        Beyond Recruitment It&apos;s a{" "}
-        <span className="text-[#B260E6]">Workforce Revolution</span>
-      </h2>
-      <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-        Unlike typical job sites, JobSync combines compliance, AI
-        assistance, and verified career mobility in one intuitive
-        platform.
-      </p>
-    </div>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-      {features.map((feature, index) => (
-        <Card
-          key={index}
-          className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 group p-6 text-center"
-        >
-          <div className="w-12 h-12 bg-gradient-to-r from-[#B260E6] to-[#ED84A5] rounded-xl flex items-center justify-center text-white mx-auto mb-4">
-            {feature.icon}
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Beyond Recruitment It&apos;s a{" "}
+              <span className="text-[#B260E6]">Workforce Revolution</span>
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Unlike typical job sites, JobSync combines compliance, AI
+              assistance, and verified career mobility in one intuitive
+              platform.
+            </p>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
-            {feature.title}
-          </h3>
-          <p className="text-gray-600 text-sm leading-relaxed">
-            {feature.description}
-          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
+            {features.map((feature, index) => (
+              <Card
+                key={index}
+                className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 group p-6 text-center"
+              >
+                <div className="w-12 h-12 bg-gradient-to-r from-[#B260E6] to-[#ED84A5] rounded-xl flex items-center justify-center text-white mx-auto mb-4">
+                  {feature.icon}
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {feature.description}
+                </p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* For Individuals Section - separate, full-width section */}
+      <section className="py-24 bg-gray-50 flex justify-center">
+        <Card className="w-full max-w-lg border-0 shadow-lg">
+          <CardContent className="p-8">
+            <div className="text-center mb-8">
+              <Users className="h-12 w-12 text-[#B260E6] mx-auto mb-4" />
+              <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                For Individuals
+              </h3>
+              <p className="text-xl text-gray-600">
+                Take Control of Your Career One Verified Step at a Time
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              {[
+                "Store, verify, and renew your qualifications automatically",
+                "Build a professional CV guided by AI — no writing needed",
+                "Access industry-matched job listings across multiple platforms",
+                "Gain recognition through verified digital badges",
+              ].map((item, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <CheckCircle className="h-5 w-5 text-[#ED84A5] flex-shrink-0" />
+                  <span className="text-gray-700">{item}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center p-4 bg-gradient-to-r from-[#B260E6]/10 to-[#ED84A5]/10 rounded-xl mb-6">
+              <p className="text-lg font-semibold text-gray-900">
+                Your career. Verified. Portable. Trusted.
+              </p>
+            </div>
+
+            <Button className="w-full bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white py-4 text-lg">
+              Create Your Verified Profile
+            </Button>
+          </CardContent>
         </Card>
-      ))}
-    </div>
-  </div>
-</section>
+      </section>
 
-{/* For Individuals Section - separate, full-width section */}
-<section className="py-24 bg-gray-50 flex justify-center">
-  <Card className="w-full max-w-lg border-0 shadow-lg">
-    <CardContent className="p-8">
-      <div className="text-center mb-8">
-        <Users className="h-12 w-12 text-[#B260E6] mx-auto mb-4" />
-        <h3 className="text-3xl font-bold text-gray-900 mb-4">
-          For Individuals
-        </h3>
-        <p className="text-xl text-gray-600">
-          Take Control of Your Career One Verified Step at a Time
-        </p>
-      </div>
 
-      <div className="space-y-4 mb-8">
-        {[
-          "Store, verify, and renew your qualifications automatically",
-          "Build a professional CV guided by AI — no writing needed",
-          "Access industry-matched job listings across multiple platforms",
-          "Gain recognition through verified digital badges",
-        ].map((item, index) => (
-          <div key={index} className="flex items-center space-x-3">
-            <CheckCircle className="h-5 w-5 text-[#ED84A5] flex-shrink-0" />
-            <span className="text-gray-700">{item}</span>
-          </div>
-        ))}
-      </div>
 
-      <div className="text-center p-4 bg-gradient-to-r from-[#B260E6]/10 to-[#ED84A5]/10 rounded-xl mb-6">
-        <p className="text-lg font-semibold text-gray-900">
-          Your career. Verified. Portable. Trusted.
-        </p>
-      </div>
-
-      <Button className="w-full bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white py-4 text-lg">
-        Create Your Verified Profile
-      </Button>
-    </CardContent>
-  </Card>
-</section>
-
-        
-   
 
       {/* Industries We Empower */}
       <section className="py-24 bg-white">
@@ -699,16 +699,16 @@ export default function Home() {
           </p>
 
           <div className="grid md:grid-cols-3 gap-8 mb-12">
-    {[
-  { title: "End-to-end encryption", icon: <Shield className="h-8 w-8 text-[#B260E6]" /> },
-  { title: "GDPR & OAIC compliant", icon: <FileCheck className="h-8 w-8 text-[#B260E6]" /> },
-  { title: "Role-based access control", icon: <Users className="h-8 w-8 text-[#B260E6]" /> },
-].map((item, index) => (
-  <div key={index} className="bg-white rounded-2xl p-6 shadow-lg">
-    <div className="mb-3">{item.icon}</div>
-    <h4 className="font-semibold text-gray-900">{item.title}</h4>
-  </div>
-))}
+            {[
+              { title: "End-to-end encryption", icon: <Shield className="h-8 w-8 text-[#B260E6]" /> },
+              { title: "GDPR & OAIC compliant", icon: <FileCheck className="h-8 w-8 text-[#B260E6]" /> },
+              { title: "Role-based access control", icon: <Users className="h-8 w-8 text-[#B260E6]" /> },
+            ].map((item, index) => (
+              <div key={index} className="bg-white rounded-2xl p-6 shadow-lg">
+                <div className="mb-3">{item.icon}</div>
+                <h4 className="font-semibold text-gray-900">{item.title}</h4>
+              </div>
+            ))}
 
           </div>
 

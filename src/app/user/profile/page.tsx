@@ -19,12 +19,20 @@ import { Progress } from "@/components/ui/progress"
 
 import { Card, CardContent } from "@/components/ui/card"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+import {
   Upload,
   Save,
   Camera,
   MapPin,
   Phone,
   Mail,
+  Download,
 } from "lucide-react"
 import { useToast } from "@/lib/hooks/useToast";
 import { apiClient } from "@/lib/api/client";
@@ -39,6 +47,7 @@ export default function ProfilePage() {
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
   const [mounted, setMounted] = useState(false);
+  const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     bio: "",
@@ -455,7 +464,7 @@ export default function ProfilePage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => window.open(user.resume, "_blank")}
+                    onClick={() => setIsResumeDialogOpen(true)}
                     className="cursor-pointer"
                   >
                     View Resume
@@ -503,6 +512,61 @@ export default function ProfilePage() {
           />
         </div>
       </DashboardCard>
+
+      {/* Resume Viewer Dialog */}
+      <Dialog open={isResumeDialogOpen} onOpenChange={setIsResumeDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] w-full">
+          <DialogHeader>
+            <DialogTitle>Resume Preview</DialogTitle>
+            <DialogDescription>
+              View your uploaded resume. You can download it using the button below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <div className="relative w-full h-[70vh] border rounded-lg overflow-hidden">
+              {user.resume ? (
+                <iframe
+                  src={user.resume}
+                  className="w-full h-full"
+                  title="Resume Preview"
+                  style={{ border: "none" }}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-muted-foreground">
+                  No resume available
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsResumeDialogOpen(false)}
+              >
+                Close
+              </Button>
+              {user.resume && (
+                <Button
+                  type="button"
+                  onClick={() => {
+                    const link = document.createElement("a");
+                    link.href = user.resume;
+                    link.download = user.resume.split("/").pop() || "resume.pdf";
+                    link.target = "_blank";
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  }}
+                  className="bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5]"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Resume
+                </Button>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

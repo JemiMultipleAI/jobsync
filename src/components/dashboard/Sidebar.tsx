@@ -23,36 +23,43 @@ const navigation = [
     name: "Dashboard",
     href: "/user",
     icon: LayoutDashboard,
+    description: "Overview of your activity",
   },
   {
     name: "Profile",
     href: "/user/profile",
     icon: User,
+    description: "Manage your profile",
   },
   {
     name: "Applications",
     href: "/user/applications",
     icon: FileText,
+    description: "Track your applications",
   },
   {
     name: "Saved Jobs",
     href: "/user/saved-jobs",
     icon: Bookmark,
+    description: "View saved positions",
   },
   {
     name: "Browse Jobs",
     href: "/user/jobs",
     icon: Briefcase,
+    description: "Discover opportunities",
   },
   {
     name: "Companies",
     href: "/user/companies",
     icon: Building2,
+    description: "Explore employers",
   },
   {
     name: "Settings",
     href: "/user/settings",
     icon: Settings,
+    description: "Account preferences",
   },
 ];
 
@@ -173,7 +180,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                     ? "bg-gradient-to-r from-[#B260E6]/10 to-[#ED84A5]/10 text-[#B260E6] shadow-sm"
                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                 )}
-                title={!isOpen ? item.name : undefined}
+                title={!isOpen ? `${item.name} - ${item.description}` : undefined}
                 suppressHydrationWarning
               >
                 {isActive && (
@@ -193,15 +200,20 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                 />
                 <AnimatePresence>
                   {isOpen && (
-                    <motion.span
+                    <motion.div
                       initial={{ opacity: 0, width: 0 }}
                       animate={{ opacity: 1, width: "auto" }}
                       exit={{ opacity: 0, width: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="relative z-10 whitespace-nowrap overflow-hidden"
+                      className="relative z-10 flex flex-col min-w-0 flex-1"
                     >
-                      {item.name}
-                    </motion.span>
+                      <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+                        {item.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground/70 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {item.description}
+                      </span>
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </Link>

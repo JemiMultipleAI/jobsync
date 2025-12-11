@@ -22,31 +22,37 @@ const navigation = [
     name: "Dashboard",
     href: "/admin",
     icon: LayoutDashboard,
+    description: "Platform overview",
   },
   {
     name: "Users",
     href: "/admin/users",
     icon: Users,
+    description: "Manage user accounts",
   },
   {
     name: "Jobs",
     href: "/admin/jobs",
     icon: Briefcase,
+    description: "Manage job postings",
   },
   {
     name: "Companies",
     href: "/admin/companies",
     icon: Building2,
+    description: "Manage employers",
   },
   {
     name: "Analytics",
     href: "/admin/analytics",
     icon: BarChart3,
+    description: "View insights",
   },
   {
     name: "Settings",
     href: "/admin/settings",
     icon: Settings,
+    description: "System configuration",
   },
 ];
 
@@ -170,7 +176,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                     ? "bg-primary/10 text-primary font-semibold shadow-sm"
                     : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
                 )}
-                title={!isOpen ? item.name : undefined}
+                title={!isOpen ? `${item.name} - ${item.description}` : undefined}
               >
                 {isActive && (
                   <motion.div
@@ -189,15 +195,20 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                 />
                 <AnimatePresence>
                   {isOpen && (
-                    <motion.span
+                    <motion.div
                       initial={{ opacity: 0, width: 0 }}
                       animate={{ opacity: 1, width: "auto" }}
                       exit={{ opacity: 0, width: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="relative z-10 whitespace-nowrap overflow-hidden"
+                      className="relative z-10 flex flex-col min-w-0 flex-1"
                     >
-                      {item.name}
-                    </motion.span>
+                      <span className="whitespace-nowrap overflow-hidden text-ellipsis">
+                        {item.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground/70 whitespace-nowrap overflow-hidden text-ellipsis">
+                        {item.description}
+                      </span>
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </Link>
