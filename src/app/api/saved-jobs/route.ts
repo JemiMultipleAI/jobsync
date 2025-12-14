@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db/connect";
-import SavedJob from "@/lib/models/SavedJob";
+import { SavedJob, Company, Job } from "@/lib/models";
 import { authenticateRequest } from "@/lib/api/middleware";
 import { z } from "zod";
 
