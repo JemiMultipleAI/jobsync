@@ -39,6 +39,13 @@ export async function uploadToSupabase(options: UploadFileOptions): Promise<Uplo
     ? `${options.folder}/${options.filename}`
     : options.filename;
 
+  console.log("📤 Uploading to Supabase:", {
+    bucket: SUPABASE_BUCKET_NAME,
+    filePath,
+    fileSize: options.file.length,
+    contentType: options.contentType || "application/octet-stream",
+  });
+
   // Upload file to Supabase Storage
   const { data, error } = await supabase.storage
     .from(SUPABASE_BUCKET_NAME)
@@ -48,14 +55,22 @@ export async function uploadToSupabase(options: UploadFileOptions): Promise<Uplo
     });
 
   if (error) {
-    console.error("Supabase upload error:", error);
+    console.error("❌ Supabase upload error:", {
+      message: error.message,
+      statusCode: error.statusCode,
+      error: error,
+    });
     throw new Error(`Failed to upload file to Supabase: ${error.message}`);
   }
+
+  console.log("✅ Supabase upload successful:", data.path);
 
   // Get public URL
   const { data: urlData } = supabase.storage
     .from(SUPABASE_BUCKET_NAME)
     .getPublicUrl(filePath);
+
+  console.log("🔗 Generated public URL:", urlData.publicUrl);
 
   return {
     url: urlData.publicUrl,

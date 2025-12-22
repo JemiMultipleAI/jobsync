@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image";
+import Link from "next/link";
 import {
   MapPin,
   Clock,
@@ -180,13 +181,17 @@ export default function Home() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button className="bg-white text-[#B260E6] hover:bg-gray-100 font-semibold px-8 py-6 text-lg rounded-full shadow-lg transition-all duration-300 hover:scale-105">
-              Create Your Verified Profile
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button className="bg-transparent border-2 border-white text-white hover:bg-white/20 font-semibold px-8 py-6 text-lg rounded-full transition-all duration-300">
-              For Employers
-            </Button>
+            <Link href="/auth/register">
+              <Button className="bg-white text-[#B260E6] hover:bg-gray-100 font-semibold px-8 py-6 text-lg rounded-full shadow-lg transition-all duration-300 hover:scale-105">
+                Create Your Verified Profile
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/auth/register">
+              <Button className="bg-transparent border-2 border-white text-white hover:bg-white/20 font-semibold px-8 py-6 text-lg rounded-full transition-all duration-300">
+                For Employers
+              </Button>
+            </Link>
           </div>
 
           <ul className="text-lg md:text-xl opacity-90">
@@ -313,9 +318,11 @@ export default function Home() {
                 The new standard of professional credibility in Australia&apos;s
                 workforce
               </p>
-              <Button className="bg-white text-[#B260E6] hover:bg-gray-100">
-                Learn More
-              </Button>
+              <Link href="/about">
+                <Button className="bg-white text-[#B260E6] hover:bg-gray-100">
+                  Learn More
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -469,9 +476,11 @@ export default function Home() {
               </p>
             </div>
 
-            <Button className="w-full bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white py-4 text-lg">
-              Create Your Verified Profile
-            </Button>
+            <Link href="/auth/register">
+              <Button className="w-full bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white py-4 text-lg">
+                Create Your Verified Profile
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </section>
@@ -553,12 +562,14 @@ export default function Home() {
                 Latest opportunities across Australian cities and regions
               </p>
             </div>
-            <Button
-              variant="outline"
-              className="mt-4 md:mt-0 border-[#B260E6] text-[#B260E6] hover:bg-[#B260E6] hover:text-white"
-            >
-              View All Jobs
-            </Button>
+            <Link href="/jobs">
+              <Button
+                variant="outline"
+                className="mt-4 md:mt-0 border-[#B260E6] text-[#B260E6] hover:bg-[#B260E6] hover:text-white"
+              >
+                View All Jobs
+              </Button>
+            </Link>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -606,9 +617,11 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <Button className="w-full bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white rounded-full">
-                    Apply Now
-                  </Button>
+                  <Link href="/auth/register">
+                    <Button className="w-full bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white rounded-full">
+                      Apply Now
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             ))}
@@ -712,9 +725,11 @@ export default function Home() {
 
           </div>
 
-          <Button className="bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white px-8 py-4 text-lg">
-            Learn About Our Security
-          </Button>
+          <Link href="/about">
+            <Button className="bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white px-8 py-4 text-lg">
+              Learn About Our Security
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -733,12 +748,16 @@ export default function Home() {
             verifies talent.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button className="bg-white text-[#B260E6] hover:bg-gray-100 font-semibold px-8 py-4 text-lg rounded-full shadow-lg">
-              Get Started Free
-            </Button>
-            <Button className="bg-transparent border-2 border-white text-white hover:bg-white/20 font-semibold px-8 py-4 text-lg rounded-full">
-              Partner With Us
-            </Button>
+            <Link href="/auth/register">
+              <Button className="bg-white text-[#B260E6] hover:bg-gray-100 font-semibold px-8 py-4 text-lg rounded-full shadow-lg">
+                Get Started Free
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button className="bg-transparent border-2 border-white text-white hover:bg-white/20 font-semibold px-8 py-4 text-lg rounded-full">
+                Partner With Us
+              </Button>
+            </Link>
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm opacity-80">
             <div className="flex items-center">
