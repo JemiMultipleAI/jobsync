@@ -57,9 +57,18 @@ export async function uploadToSupabase(options: UploadFileOptions): Promise<Uplo
   if (error) {
     console.error("❌ Supabase upload error:", {
       message: error.message,
-      statusCode: error.statusCode,
+      name: error.name,
       error: error,
     });
+    
+    // Check if bucket exists
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+    if (listError) {
+      console.error("❌ Cannot list buckets:", listError);
+    } else {
+      console.log("📦 Available buckets:", buckets?.map(b => b.name));
+    }
+    
     throw new Error(`Failed to upload file to Supabase: ${error.message}`);
   }
 
@@ -86,14 +95,37 @@ export async function deleteFromSupabase(key: string): Promise<void> {
     throw new Error("Supabase is not configured");
   }
 
+  // If it's a local path format (/uploads/...), extract just the path part
+  let fileKey = key;
+  if (key.startsWith("/uploads/")) {
+    // Remove /uploads/ prefix to get the relative path
+    fileKey = key.replace("/uploads/", "");
+  } else if (key.startsWith("http")) {
+    // Extract from full Supabase URL
+    fileKey = extractKeyFromUrl(key);
+  }
+
+  console.log("🗑️ Deleting from Supabase:", {
+    originalKey: key,
+    extractedKey: fileKey,
+    bucket: SUPABASE_BUCKET_NAME,
+  });
+
   const { error } = await supabase.storage
     .from(SUPABASE_BUCKET_NAME)
-    .remove([key]);
+    .remove([fileKey]);
 
   if (error) {
-    console.error("Supabase delete error:", error);
+    console.error("❌ Supabase delete error:", {
+      message: error.message,
+      name: error.name,
+      key: fileKey,
+      error: error,
+    });
     throw new Error(`Failed to delete file from Supabase: ${error.message}`);
   }
+  
+  console.log("✅ Successfully deleted from Supabase:", fileKey);
 }
 
 /**
