@@ -30,7 +30,7 @@ import {
 import { useState  } from "react"
 
 const loginSchema = z.object({
-  role: z.enum(["user", "admin"] as const),
+  role: z.enum(["user", "admin", "employer"] as const),
   email: z.string().min(1, "Email is required").email("Invalid email format"),
   password: z.string().min(1, "Password is required"),
 });

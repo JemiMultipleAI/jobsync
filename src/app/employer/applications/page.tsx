@@ -119,7 +119,7 @@ export default function EmployerApplicationsPage() {
 
     if (selectedJob !== "all") {
       filtered = filtered.filter((app) => 
-        app.job?._id === selectedJob || app.job === selectedJob
+        app.job?._id === selectedJob || String(app.job?._id) === selectedJob
       );
     }
 
@@ -306,4 +306,5 @@ export default function EmployerApplicationsPage() {
     </div>
   );
 }
+
 

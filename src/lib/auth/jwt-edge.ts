@@ -11,7 +11,7 @@ const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
 export interface JWTPayload {
   userId: string;
   email: string;
-  role: "user" | "admin";
+  role: "user" | "admin" | "employer";
 }
 
 // Convert expiresIn string to seconds
