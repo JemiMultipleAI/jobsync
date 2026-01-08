@@ -6,7 +6,7 @@ export interface AuthenticatedRequest extends NextRequest {
   user?: {
     userId: string;
     email: string;
-    role: "user" | "admin";
+    role: "user" | "admin" | "employer";
   };
 }
 
@@ -56,6 +56,18 @@ export function requireAdmin(
   if (!user || user.role !== "admin") {
     return NextResponse.json(
       { error: "Admin access required" },
+      { status: 403 }
+    );
+  }
+  return null;
+}
+
+export function requireEmployer(
+  user: { role: string } | null
+): NextResponse | null {
+  if (!user || user.role !== "employer") {
+    return NextResponse.json(
+      { error: "Employer access required" },
       { status: 403 }
     );
   }

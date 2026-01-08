@@ -28,12 +28,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user (map job_seeker to user, employer to user for now)
+    // Create user (map job_seeker to user, employer to employer role)
     const user = await User.create({
       name: `${validatedData.firstname} ${validatedData.lastname}`,
       email: validatedData.email,
       password: validatedData.password, // Will be hashed by pre-save hook
-      role: validatedData.role === "employer" ? "admin" : "user", // Map employer to admin for now
+      role: validatedData.role === "employer" ? "employer" : "user",
     });
 
     // Generate JWT token

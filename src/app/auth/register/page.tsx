@@ -28,7 +28,7 @@ import { useState  } from "react"
 
 const registerSchema = z
   .object({
-    role: z.enum(["user", "admin"], {
+    role: z.enum(["user", "admin", "employer"], {
       error: "Please select a role",
     }),
     name: z.string().min(1, "Name is required"),
@@ -110,6 +110,8 @@ export default function RegisterPage() {
       // Redirect based on role
       if (result.user.role === "admin") {
         router.push("/admin");
+      } else if (result.user.role === "employer") {
+        router.push("/employer");
       } else {
         router.push("/user");
       }
@@ -263,7 +265,7 @@ export default function RegisterPage() {
                   <Label className="text-sm font-medium text-gray-700">
                     Register as
                   </Label>
-                  <div className="grid grid-cols-2 gap-3 p-1 bg-gray-100 rounded-xl">
+                  <div className="grid grid-cols-3 gap-3 p-1 bg-gray-100 rounded-xl">
                     <button
                       type="button"
                       onClick={() => setValue("role", "user")}
@@ -275,6 +277,18 @@ export default function RegisterPage() {
                     >
                       <User className="h-5 w-5" />
                       <span className="font-medium">User</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setValue("role", "employer")}
+                      className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
+                        selectedRole === "employer"
+                          ? "bg-white shadow-md text-[#B260E6]"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      <Briefcase className="h-5 w-5" />
+                      <span className="font-medium">Employer</span>
                     </button>
                     <button
                       type="button"

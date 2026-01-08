@@ -88,7 +88,12 @@ export default function LoginPage() {
 
       // The cookie is set by the server response
       // Wait for it to be fully processed, then redirect
-      const redirectPath = result.user.role === "admin" ? "/admin" : "/user";
+      let redirectPath = "/user";
+      if (result.user.role === "admin") {
+        redirectPath = "/admin";
+      } else if (result.user.role === "employer") {
+        redirectPath = "/employer";
+      }
       
       // Wait longer to ensure cookie is fully persisted
       // Then redirect using window.location which ensures cookie is sent
@@ -247,7 +252,7 @@ export default function LoginPage() {
                   <Label className="text-sm font-medium text-gray-700">
                     Login as
                   </Label>
-                  <div className="grid grid-cols-2 gap-3 p-1 bg-gray-100 rounded-xl">
+                  <div className="grid grid-cols-3 gap-3 p-1 bg-gray-100 rounded-xl">
                     <button
                       type="button"
                       onClick={() => setValue("role", "user")}
@@ -259,6 +264,18 @@ export default function LoginPage() {
                     >
                       <UserCircle className="h-5 w-5" />
                       <span className="font-medium">User</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setValue("role", "employer")}
+                      className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
+                        selectedRole === "employer"
+                          ? "bg-white shadow-md text-[#B260E6]"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      <Briefcase className="h-5 w-5" />
+                      <span className="font-medium">Employer</span>
                     </button>
                     <button
                       type="button"
