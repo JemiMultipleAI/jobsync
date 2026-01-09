@@ -3,6 +3,8 @@ import connectDB from "@/lib/db/connect";
 import User from "@/lib/models/User";
 import { authenticateRequest } from "@/lib/api/middleware";
 import { z } from "zod";
+import { handleApiError } from "@/lib/api/error-handler";
+import { sanitizeString, sanitizeObject } from "@/lib/utils/sanitize";
 
 const updateProfileSchema = z.object({
   name: z.string().min(1).optional(),
@@ -21,9 +23,10 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
-    const user = await User.findById(authResult.user!.userId).select(
-      "-password"
-    );
+    const user = await User.findById(authResult.user!.userId)
+      .select("-password")
+      .populate("company", "name _id")
+      .lean();
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -35,6 +38,7 @@ export async function GET(request: NextRequest) {
         name: user.name,
         email: user.email,
         role: user.role,
+        company: user.company,
         bio: user.bio,
         phone: user.phone,
         location: user.location,
@@ -46,12 +50,8 @@ export async function GET(request: NextRequest) {
         updatedAt: user.updatedAt,
       },
     });
-  } catch (error: any) {
-    console.error("Get profile error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 
@@ -66,13 +66,30 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json();
     
+    // Sanitize input
+    const sanitizedBody = sanitizeObject(body, {
+      fields: {
+        name: "string",
+        bio: "string",
+        phone: "phone",
+        location: "string",
+      },
+    });
+    
     // Clean up empty strings - convert them to undefined so they're not sent to MongoDB
-    const cleanedBody: any = {};
-    if (body.name !== undefined && body.name !== "") cleanedBody.name = body.name;
-    if (body.bio !== undefined) cleanedBody.bio = body.bio || undefined; // Allow empty bio
-    if (body.phone !== undefined && body.phone !== "") cleanedBody.phone = body.phone;
-    if (body.location !== undefined && body.location !== "") cleanedBody.location = body.location;
-    if (body.skills !== undefined) cleanedBody.skills = body.skills;
+    const cleanedBody: Record<string, unknown> = {};
+    if (sanitizedBody.name !== undefined && sanitizedBody.name !== "") cleanedBody.name = sanitizedBody.name;
+    if (sanitizedBody.bio !== undefined) cleanedBody.bio = sanitizedBody.bio || undefined; // Allow empty bio
+    if (sanitizedBody.phone !== undefined && sanitizedBody.phone !== "") cleanedBody.phone = sanitizedBody.phone;
+    if (sanitizedBody.location !== undefined && sanitizedBody.location !== "") cleanedBody.location = sanitizedBody.location;
+    if (sanitizedBody.skills !== undefined) {
+      // Sanitize skills array
+      cleanedBody.skills = Array.isArray(sanitizedBody.skills)
+        ? sanitizedBody.skills.map((skill: unknown) => 
+            typeof skill === "string" ? sanitizeString(skill) : skill
+          )
+        : sanitizedBody.skills;
+    }
 
     const validatedData = updateProfileSchema.parse(cleanedBody);
 
@@ -87,7 +104,9 @@ export async function PUT(request: NextRequest) {
     }
 
     // Recalculate profile completion
-    user.profileCompletion = (user as any).calculateProfileCompletion();
+    if ('calculateProfileCompletion' in user && typeof (user as { calculateProfileCompletion: () => number }).calculateProfileCompletion === 'function') {
+      user.profileCompletion = (user as { calculateProfileCompletion: () => number }).calculateProfileCompletion();
+    }
     await user.save();
 
     return NextResponse.json({
@@ -107,20 +126,8 @@ export async function PUT(request: NextRequest) {
         updatedAt: user.updatedAt,
       },
     });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      console.error("Validation error:", error.issues);
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      );
-    }
-
-    console.error("Update profile error:", error);
-    return NextResponse.json(
-      { error: "Internal server error", message: error.message },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 

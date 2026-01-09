@@ -13,11 +13,9 @@ export default function EmployerLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start closed on mobile
-  const [mounted, setMounted] = useState(false);
 
   // Handle responsive behavior - only after mount to avoid hydration mismatch
   useEffect(() => {
-    setMounted(true);
     const handleResize = () => {
       const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
 

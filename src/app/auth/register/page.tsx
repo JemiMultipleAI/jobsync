@@ -98,8 +98,8 @@ export default function RegisterPage() {
       if (!response.ok) {
         const errorMessage = result.error || "Registration failed";
         // Use toast if available, otherwise alert
-        if (typeof window !== "undefined" && (window as any).toast) {
-          (window as any).toast.error(errorMessage);
+        if (typeof window !== "undefined" && 'toast' in window && typeof (window as { toast?: { error: (msg: string) => void } }).toast?.error === 'function') {
+          (window as { toast: { error: (msg: string) => void } }).toast.error(errorMessage);
         } else {
           alert(errorMessage);
         }

@@ -136,8 +136,9 @@ export default function SignUpPage() {
       } else {
         toast.error(data.error || "Something went wrong");
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to create account");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create account";
+      toast.error(message);
     } finally {
       setLoading(false)
     }

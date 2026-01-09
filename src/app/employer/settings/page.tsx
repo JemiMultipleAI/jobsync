@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/lib/hooks/useToast";
-import { apiClient } from "@/lib/api/client";
 
 export default function EmployerSettingsPage() {
   const toast = useToast();
@@ -22,7 +21,7 @@ export default function EmployerSettingsPage() {
     try {
       // In production, save to backend
       toast.success("Settings saved successfully");
-    } catch (error: any) {
+    } catch (_error) {
       toast.error("Failed to save settings");
     }
   };
@@ -119,5 +118,6 @@ export default function EmployerSettingsPage() {
     </div>
   );
 }
+
 
 

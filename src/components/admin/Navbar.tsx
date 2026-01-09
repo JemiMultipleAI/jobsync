@@ -31,7 +31,14 @@ export default function Navbar() {
 
   const fetchUserProfile = async () => {
     try {
-      const data = await apiClient.get<{ user: any }>("/api/auth/profile");
+      interface UserProfile {
+        _id: string;
+        name: string;
+        email: string;
+        role: string;
+        profileImage?: string;
+      }
+      const data = await apiClient.get<{ user: UserProfile }>("/api/auth/profile");
       setUser(data.user);
     } catch (error) {
       // Silently fail - user might not be logged in or token expired
@@ -53,9 +60,10 @@ export default function Navbar() {
       await apiClient.post("/api/auth/logout");
       toast.success("Logged out successfully");
       router.push("/auth/login");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Logout error:", error);
-      toast.error(error.message || "Failed to logout");
+      const errorMessage = error instanceof Error ? error.message : "Failed to logout";
+      toast.error(errorMessage);
       // Still redirect even if logout fails
       router.push("/auth/login");
     }

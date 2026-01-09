@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db/connect";
-import { Application, Job, Company } from "@/lib/models";
-import { authenticateRequest, requireAdmin } from "@/lib/api/middleware";
+import { Application, Job } from "@/lib/models";
+import { authenticateRequest } from "@/lib/api/middleware";
 import { z } from "zod";
 
 const updateApplicationSchema = z.object({
@@ -55,7 +55,7 @@ export async function GET(
     }
 
     return NextResponse.json({ application });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get application error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -105,7 +105,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
     if (validatedData.status) {
       updateData.status = validatedData.status;
       updateData.reviewedAt = new Date();
@@ -134,7 +134,7 @@ export async function PUT(
       message: "Application updated successfully",
       application: updatedApplication,
     });
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.issues },
@@ -190,7 +190,7 @@ export async function DELETE(
     return NextResponse.json({
       message: "Application withdrawn successfully",
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Delete application error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

@@ -14,6 +14,7 @@ export interface ICompany extends Document {
   rating?: number;
   openJobs: number;
   createdBy: mongoose.Types.ObjectId; // Reference to User (admin/employer)
+  members: mongoose.Types.ObjectId[]; // Array of User IDs in this company
   createdAt: Date;
   updatedAt: Date;
 }
@@ -75,6 +76,10 @@ const CompanySchema = new Schema<ICompany>(
       ref: "User",
       required: true,
     },
+    members: [{
+      type: Schema.Types.ObjectId,
+      ref: "User",
+    }],
   },
   {
     timestamps: true,

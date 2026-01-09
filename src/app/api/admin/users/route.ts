@@ -2,15 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db/connect";
 import User from "@/lib/models/User";
 import { authenticateRequest, requireAdmin } from "@/lib/api/middleware";
-import { z } from "zod";
-
-const updateUserSchema = z.object({
-  name: z.string().min(1).optional(),
-  role: z.enum(["user", "admin"]).optional(),
-  bio: z.string().optional(),
-  phone: z.string().optional(),
-  location: z.string().optional(),
-});
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +24,7 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get("role");
     const search = searchParams.get("search");
 
-    const query: any = {};
+    const query: Record<string, unknown> = {};
 
     if (role) {
       query.role = role;
@@ -67,7 +58,7 @@ export async function GET(request: NextRequest) {
         pages: Math.ceil(total / limit),
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get users error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

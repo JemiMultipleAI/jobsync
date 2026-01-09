@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useState, useEffect } from "react"
+import React, { useMemo, useState, useEffect, useCallback } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -22,11 +22,6 @@ import {
   BadgeCheck,
   Building2,
   Users,
-  BadgeDollarSign,
-  BarChart3,
-  Coffee,
-  GraduationCap,
-  Baby,
 } from "lucide-react"
 
 interface Company {
@@ -58,12 +53,7 @@ export default function CompaniesPage(): React.JSX.Element {
     successRate: 95,
   })
 
-  useEffect(() => {
-    fetchCompanies()
-    fetchStats()
-  }, [selectedIndustry, searchTerm])
-
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -78,24 +68,30 @@ export default function CompaniesPage(): React.JSX.Element {
         params.append("search", searchTerm)
       }
 
-      const data = await apiClient.get<{ companies: Company[]; pagination: any }>(
+      const data = await apiClient.get<{ companies: Company[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
         `/api/companies?${params.toString()}`
       )
       setCompanies(data.companies)
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching companies:", error)
-      toast.error(error.message || "Failed to load companies")
+      const message = error instanceof Error ? error.message : "Failed to load companies";
+      toast.error(message);
     } finally {
       setLoading(false)
     }
-  }
+  }, [selectedIndustry, searchTerm, toast]);
+
+  useEffect(() => {
+    fetchCompanies()
+    fetchStats()
+  }, [fetchCompanies])
 
   const fetchStats = async () => {
     try {
       // Fetch stats from APIs
       const [companiesData, jobsData] = await Promise.all([
-        apiClient.get<{ pagination: any }>("/api/companies?limit=1"),
-        apiClient.get<{ pagination: any }>("/api/jobs?limit=1&status=active"),
+        apiClient.get<{ pagination: { total: number } }>("/api/companies?limit=1"),
+        apiClient.get<{ pagination: { total: number } }>("/api/jobs?limit=1&status=active"),
       ])
       setStats({
         totalCompanies: companiesData.pagination.total || 0,

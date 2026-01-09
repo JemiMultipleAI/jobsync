@@ -12,7 +12,7 @@ function getTokenFromRequest(request: NextRequest): string | null {
 }
 
 // Routes that require authentication
-const protectedRoutes = ["/user", "/admin"];
+const protectedRoutes = ["/user", "/admin", "/employer"];
 
 // Routes that should redirect if already authenticated
 const authRoutes = ["/auth/login", "/auth/register", "/signin", "/signup"];
@@ -24,11 +24,6 @@ export async function middleware(request: NextRequest) {
   const token =
     request.cookies.get("token")?.value ||
     getTokenFromRequest(request);
-  
-  // Debug logging (remove in production)
-  if (process.env.NODE_ENV === "development") {
-    console.log(`[Middleware] Path: ${pathname}, Has token: ${!!token}`);
-  }
 
   // Check if route is protected
   const isProtectedRoute = protectedRoutes.some((route) =>
@@ -52,20 +47,34 @@ export async function middleware(request: NextRequest) {
       
       // Check admin routes require admin role
       if (pathname.startsWith("/admin") && payload.role !== "admin") {
+        // Redirect to appropriate dashboard based on role
+        if (payload.role === "employer") {
+          return NextResponse.redirect(new URL("/employer", request.url));
+        }
         return NextResponse.redirect(new URL("/user", request.url));
       }
 
-      // Check user routes require user role
-      if (pathname.startsWith("/user") && payload.role === "admin") {
-        // Allow admins to access user routes too
-        return NextResponse.next();
+      // Check employer routes require employer role
+      if (pathname.startsWith("/employer") && payload.role !== "employer") {
+        // Redirect to appropriate dashboard based on role
+        if (payload.role === "admin") {
+          return NextResponse.redirect(new URL("/admin", request.url));
+        }
+        return NextResponse.redirect(new URL("/user", request.url));
+      }
+
+      // Check user routes - allow admins to access user routes too
+      if (pathname.startsWith("/user")) {
+        if (payload.role === "admin" || payload.role === "employer") {
+          // Allow admins and employers to access user routes
+          return NextResponse.next();
+        }
       }
       
       // Token is valid, allow access
       return NextResponse.next();
-    } catch (error) {
+    } catch (_error) {
       // Invalid token, redirect to login and clear cookie
-      console.error("Token verification failed:", error);
       const loginUrl = new URL("/auth/login", request.url);
       loginUrl.searchParams.set("redirect", pathname);
       const response = NextResponse.redirect(loginUrl);
@@ -80,10 +89,12 @@ export async function middleware(request: NextRequest) {
       const payload = await verifyTokenEdge(token);
       if (payload.role === "admin") {
         return NextResponse.redirect(new URL("/admin", request.url));
+      } else if (payload.role === "employer") {
+        return NextResponse.redirect(new URL("/employer", request.url));
       } else {
         return NextResponse.redirect(new URL("/user", request.url));
       }
-    } catch (error) {
+    } catch (_error) {
       // Invalid token, allow access to auth routes
       return NextResponse.next();
     }

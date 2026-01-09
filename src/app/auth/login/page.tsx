@@ -5,32 +5,29 @@ import Link from "next/link";
 import { useForm  } from "react-hook-form"
 import { zodResolver  } from "@hookform/resolvers/zod"
 import * as z from "zod";
-import { Eye ,Briefcase } from "lucide-react"
-import { Shield  } from "lucide-react"
+import { Briefcase } from "lucide-react"
 import { Award  } from "lucide-react"
 import React from "react"
 import{motion} from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/hooks/useToast";
-import { apiClient } from "@/lib/api/client";
 
 import { Card,  CardContent,  CardHeader,  CardTitle  } from "@/components/ui/card"
 import { Input  } from "@/components/ui/input"
 import { Label  } from "@/components/ui/label"
 import { Separator  } from "@/components/ui/separator"
 import { 
+  Eye,
   EyeOff, 
   LogIn, 
   ArrowRight, 
   Mail, 
   Lock, 
   Users, 
-  UserCircle, 
- } from "lucide-react"
+} from "lucide-react"
 import { useState  } from "react"
 
 const loginSchema = z.object({
-  role: z.enum(["user", "admin", "employer"] as const),
   email: z.string().min(1, "Email is required").email("Invalid email format"),
   password: z.string().min(1, "Password is required"),
 });
@@ -47,16 +44,9 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
-    setValue,
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      role: "user",
-    },
   });
-
-  const selectedRole = watch("role");
 
   const onSubmit = async (data: LoginFormData) => {
     setIsSubmitting(true);
@@ -101,9 +91,9 @@ export default function LoginPage() {
         // Force a full navigation to ensure cookie is included in request
         window.location.href = redirectPath;
       }, 1500);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Login error:", error);
-      const errorMessage = error.message || "An error occurred. Please try again.";
+      const errorMessage = error instanceof Error ? error.message : "An error occurred. Please try again.";
       toast.error(errorMessage);
       setIsSubmitting(false);
     }
@@ -247,62 +237,6 @@ export default function LoginPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: 0.3 }}
-                  className="space-y-3"
-                >
-                  <Label className="text-sm font-medium text-gray-700">
-                    Login as
-                  </Label>
-                  <div className="grid grid-cols-3 gap-3 p-1 bg-gray-100 rounded-xl">
-                    <button
-                      type="button"
-                      onClick={() => setValue("role", "user")}
-                      className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
-                        selectedRole === "user"
-                          ? "bg-white shadow-md text-[#B260E6]"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      <UserCircle className="h-5 w-5" />
-                      <span className="font-medium">User</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setValue("role", "employer")}
-                      className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
-                        selectedRole === "employer"
-                          ? "bg-white shadow-md text-[#B260E6]"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      <Briefcase className="h-5 w-5" />
-                      <span className="font-medium">Employer</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setValue("role", "admin")}
-                      className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
-                        selectedRole === "admin"
-                          ? "bg-white shadow-md text-[#B260E6]"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      <Shield className="h-5 w-5" />
-                      <span className="font-medium">Admin</span>
-                    </button>
-                  </div>
-                  <input type="hidden" {...register("role")} />
-                  {errors.role && (
-                    <p className="text-red-500 text-sm flex items-center gap-1">
-                      <span>•</span>
-                      {errors.role.message}
-                    </p>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.35 }}
                   className="space-y-3"
                 >
                   <Label

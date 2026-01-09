@@ -3,6 +3,9 @@ import connectDB from "@/lib/db/connect";
 import User from "@/lib/models/User";
 import { generateToken } from "@/lib/auth/jwt";
 import { z } from "zod";
+import { handleApiError } from "@/lib/api/error-handler";
+import { env } from "@/lib/config/env";
+import { logger } from "@/lib/logger";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -14,7 +17,13 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const validatedData = loginSchema.parse(body);
+    
+    // Simple email validation (no heavy sanitization needed for login - just a DB lookup)
+    // Zod will validate the email format
+    const validatedData = loginSchema.parse({
+      email: (body.email || "").toLowerCase().trim(),
+      password: body.password,
+    });
 
     // Find user and include password
     const user = await User.findOne({ email: validatedData.email }).select(
@@ -61,46 +70,31 @@ export async function POST(request: NextRequest) {
 
     // Set HttpOnly cookie
     // Note: Don't set domain in development (localhost), let browser handle it
-    const cookieOptions: any = {
+    const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "lax" as const,
       maxAge: 60 * 60 * 24 * 7, // 7 days (in seconds)
       path: "/",
+      ...(env.NODE_ENV === "production" && env.COOKIE_DOMAIN
+        ? { domain: env.COOKIE_DOMAIN }
+        : {}),
     };
-    
-    // Only set domain in production
-    if (process.env.NODE_ENV === "production" && process.env.COOKIE_DOMAIN) {
-      cookieOptions.domain = process.env.COOKIE_DOMAIN;
-    }
     
     response.cookies.set("token", token, cookieOptions);
     
-    // Debug: Log cookie setting (remove in production)
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Login] Cookie set with options:", {
-        httpOnly: cookieOptions.httpOnly,
-        secure: cookieOptions.secure,
-        sameSite: cookieOptions.sameSite,
-        maxAge: cookieOptions.maxAge,
-        path: cookieOptions.path,
-      });
-    }
+    // Debug: Log cookie setting (development only)
+    logger.debug("[Login] Cookie set", {
+      httpOnly: cookieOptions.httpOnly,
+      secure: cookieOptions.secure,
+      sameSite: cookieOptions.sameSite,
+      maxAge: cookieOptions.maxAge,
+      path: cookieOptions.path,
+    });
 
     return response;
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      );
-    }
-
-    console.error("Login error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 

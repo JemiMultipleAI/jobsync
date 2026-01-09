@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Card, CardContent } from "@/components/ui/card";
 import React from "react";
@@ -55,11 +55,7 @@ export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchCompanies();
-  }, [selectedIndustry, selectedLocation, searchQuery]);
-
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -77,17 +73,18 @@ export default function CompaniesPage() {
         params.append("search", searchQuery);
       }
 
-      const data = await apiClient.get<{ companies: Company[]; pagination: any }>(
+      const data = await apiClient.get<{ companies: Company[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
         `/api/companies?${params.toString()}`
       );
       setCompanies(data.companies);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching companies:", error);
-      toast.error(error.message || "Failed to load companies");
+      const message = error instanceof Error ? error.message : "Failed to load companies";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedIndustry, selectedLocation, searchQuery, toast]);
 
   const toggleFollow = (companyId: string) => {
     if (followedCompanies.includes(companyId)) {

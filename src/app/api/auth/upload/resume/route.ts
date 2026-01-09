@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
     if (user.resume) {
       try {
         await deleteFile(user.resume);
-      } catch (error) {
-        console.error("Error deleting old resume:", error);
+      } catch (_error) {
+        console.error("Error deleting old resume:", _error);
         // Continue even if deletion fails
       }
     }
@@ -90,7 +90,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Recalculate profile completion
-    updatedUser.profileCompletion = (updatedUser as any).calculateProfileCompletion();
+    if ('calculateProfileCompletion' in updatedUser && typeof (updatedUser as { calculateProfileCompletion: () => number }).calculateProfileCompletion === 'function') {
+      updatedUser.profileCompletion = (updatedUser as { calculateProfileCompletion: () => number }).calculateProfileCompletion();
+    }
     await updatedUser.save();
 
     return NextResponse.json({
@@ -98,10 +100,10 @@ export async function POST(request: NextRequest) {
       resume: uploadResult.url,
       profileCompletion: updatedUser.profileCompletion,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Resume upload error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }
@@ -143,14 +145,16 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Recalculate profile completion
-    updatedUser.profileCompletion = (updatedUser as any).calculateProfileCompletion();
+    if ('calculateProfileCompletion' in updatedUser && typeof (updatedUser as { calculateProfileCompletion: () => number }).calculateProfileCompletion === 'function') {
+      updatedUser.profileCompletion = (updatedUser as { calculateProfileCompletion: () => number }).calculateProfileCompletion();
+    }
     await updatedUser.save();
 
     return NextResponse.json({
       message: "Resume deleted successfully",
       profileCompletion: updatedUser.profileCompletion,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Resume delete error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

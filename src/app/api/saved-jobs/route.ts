@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db/connect";
-import { SavedJob, Company, Job } from "@/lib/models";
+import { SavedJob } from "@/lib/models";
 import { authenticateRequest } from "@/lib/api/middleware";
 import { z } from "zod";
 
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         pages: Math.ceil(total / limit),
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get saved jobs error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.issues },
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (error.code === 11000) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { error: "Job is already saved" },
         { status: 400 }
@@ -164,7 +164,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({
       message: "Job removed from saved",
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Delete saved job error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

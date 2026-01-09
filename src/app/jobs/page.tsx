@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useToast } from "@/lib/hooks/useToast";
@@ -20,7 +20,6 @@ import { Wrench,
   Search, 
   MapPin, 
   Filter, 
-  Building, 
   Clock, 
   ArrowRight,
   DollarSign,
@@ -76,11 +75,7 @@ export default function JobsPage() {
 
   const locations = ["All", "Sydney, NSW", "Melbourne, VIC", "Brisbane, QLD", "Perth, WA", "Adelaide, SA", "Canberra, ACT"];
 
-  useEffect(() => {
-    fetchJobs();
-  }, [page, selectedCategory, selectedType, selectedLocation, searchTerm]);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -110,7 +105,7 @@ export default function JobsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, selectedCategory, selectedType, selectedLocation, searchTerm, toast]);
 
   const formatSalary = (salary?: { min?: number; max?: number; currency?: string; period?: string }) => {
     if (!salary || (!salary.min && !salary.max)) return "Salary not specified";

@@ -3,6 +3,7 @@
 import StatWidget from "@/components/admin/StatWidget";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Briefcase, FileText, Users, TrendingUp } from "lucide-react";
+import { useCallback } from "react";
 import { motion } from "framer-motion";
 import React, { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -24,42 +25,45 @@ export default function EmployerDashboard() {
   const [recentApplications, setRecentApplications] = useState<any[]>([]);
   const [recentJobs, setRecentJobs] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       
-      // Fetch user's company first
-      const profileRes = await apiClient.get<{ user: any }>("/api/auth/profile");
-      const userId = profileRes.user._id;
-
-      // Fetch jobs posted by this employer (filtered by company or user)
-      const jobsRes = await apiClient.get<{ jobs: any[]; pagination: any }>("/api/jobs?limit=100");
-      
-      // Filter jobs by the employer's company (assuming company is linked to user)
-      // For now, we'll show all jobs - in production, filter by company
+      // Fetch jobs from employer's company (already filtered by API)
+      const jobsRes = await apiClient.get<{ 
+        jobs: Array<{ _id: string; title: string; status: string; createdAt: string; company?: { name: string } }>; 
+        pagination: { page: number; limit: number; total: number; pages: number } 
+      }>("/api/employer/jobs?limit=100");
       const allJobs = jobsRes.jobs || [];
       const activeJobs = allJobs.filter((j) => j.status === "active");
       
-      // Fetch applications (filtered by employer's jobs)
-      let applications: any[] = [];
+      // Fetch applications for employer's company jobs (already filtered by API)
+      let applications: Array<{ 
+        _id: string; 
+        applicant?: { name: string }; 
+        job?: { _id: string; title: string } | string; 
+        status: string; 
+        appliedAt?: string; 
+        createdAt: string 
+      }> = [];
       try {
-        const appsRes = await apiClient.get<{ applications: any[]; pagination: any }>("/api/applications?limit=100");
+        const appsRes = await apiClient.get<{ 
+          applications: Array<{ 
+            _id: string; 
+            applicant?: { name: string }; 
+            job?: { _id: string; title: string } | string; 
+            status: string; 
+            appliedAt?: string; 
+            createdAt: string 
+          }>; 
+          pagination: { page: number; limit: number; total: number; pages: number } 
+        }>("/api/employer/applications?limit=100");
         applications = appsRes.applications || [];
-        
-        // Filter applications for jobs posted by this employer
-        const employerJobIds = allJobs.map((j: any) => j._id);
-        applications = applications.filter((app: any) => 
-          employerJobIds.includes(app.job?._id || app.job)
-        );
-      } catch (error) {
+      } catch (_error) {
         console.log("Applications API not available or no applications yet");
       }
 
-      const pendingApplications = applications.filter((app: any) => 
+      const pendingApplications = applications.filter((app) => 
         app.status === "pending" || app.status === "under_review"
       );
 
@@ -76,10 +80,10 @@ export default function EmployerDashboard() {
           .slice(0, 5)
           .map((app) => ({
             id: app._id,
-            candidate: app.user?.name || "Unknown",
-            job: app.job?.title || "Unknown Job",
+            candidate: app.applicant?.name || "Unknown",
+            job: typeof app.job === 'string' ? "Unknown Job" : app.job?.title || "Unknown Job",
             status: app.status,
-            date: formatTimeAgo(app.createdAt),
+            date: formatTimeAgo(app.appliedAt || app.createdAt),
           }))
       );
 
@@ -90,20 +94,26 @@ export default function EmployerDashboard() {
           .map((job) => ({
             id: job._id,
             title: job.title,
-            applications: applications.filter((app: any) => 
-              app.job?._id === job._id || app.job === job._id
-            ).length,
+            applications: applications.filter((app) => {
+              const jobId = typeof app.job === 'string' ? app.job : app.job?._id;
+              return jobId === job._id;
+            }).length,
             status: job.status,
             date: formatTimeAgo(job.createdAt),
           }))
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      toast.error("Failed to load dashboard data");
+      const message = error instanceof Error ? error.message : "Failed to load dashboard data";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -316,5 +326,6 @@ export default function EmployerDashboard() {
     </div>
   );
 }
+
 
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DataTable from "@/components/admin/DataTable";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
@@ -11,8 +11,6 @@ import { apiClient } from "@/lib/api/client";
 import {
   Briefcase,
   Plus,
-  Edit,
-  Trash2,
 } from "lucide-react";
 
 import {
@@ -22,7 +20,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -84,36 +81,43 @@ export default function JobsPage() {
     salaryPeriod: "year",
   });
 
-  useEffect(() => {
-    fetchJobs();
-    fetchCompanies();
-  }, []);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiClient.get<{ jobs: Job[]; pagination: any }>(
+      const data = await apiClient.get<{ jobs: Job[]; pagination: unknown }>(
         "/api/jobs?limit=100"
       );
       setJobs(data.jobs);
-    } catch (error: any) {
-      console.error("Error fetching jobs:", error);
-      toast.error(error.message || "Failed to load jobs");
+    } catch (error) {
+      if (error instanceof Error) {
+        const message = error instanceof Error ? error.message : "Failed to load jobs";
+        toast.error(message);
+      } else {
+        toast.error("Failed to load jobs");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       const data = await apiClient.get<{ companies: Company[] }>(
         "/api/companies?limit=100"
       );
       setCompanies(data.companies);
-    } catch (error: any) {
-      console.error("Error fetching companies:", error);
+    } catch (error) {
+      if (error instanceof Error) {
+        const message = error instanceof Error ? error.message : "Failed to load companies";
+        toast.error(message);
+      }
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchJobs();
+    fetchCompanies();
+  }, [fetchJobs, fetchCompanies]);
 
   const handleCreate = () => {
     setIsEditMode(false);
@@ -160,9 +164,10 @@ export default function JobsPage() {
       await apiClient.delete(`/api/jobs/${job._id}`);
       toast.success("Job deleted successfully");
       fetchJobs();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting job:", error);
-      toast.error(error.message || "Failed to delete job");
+      const message = error instanceof Error ? error.message : "Failed to delete job";
+      toast.error(message);
     }
   };
 
@@ -171,7 +176,7 @@ export default function JobsPage() {
     setSaving(true);
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         title: formData.title,
         company: formData.company,
         type: formData.type,
@@ -200,9 +205,10 @@ export default function JobsPage() {
 
       setIsDialogOpen(false);
       fetchJobs();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving job:", error);
-      toast.error(error.message || "Failed to save job");
+      const message = error instanceof Error ? error.message : "Failed to save job";
+      toast.error(message);
     } finally {
       setSaving(false);
     }

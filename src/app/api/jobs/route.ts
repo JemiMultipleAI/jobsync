@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db/connect";
 import Job from "@/lib/models/Job";
 import Company from "@/lib/models/Company";
-import { authenticateRequest, requireAdmin } from "@/lib/api/middleware";
+import User from "@/lib/models/User";
+import { authenticateRequest } from "@/lib/api/middleware";
+import { handleApiError } from "@/lib/api/error-handler";
 import { z } from "zod";
 
 const createJobSchema = z.object({
@@ -37,7 +39,7 @@ export async function GET(request: NextRequest) {
     const location = searchParams.get("location");
     const search = searchParams.get("search");
 
-    const query: any = { status };
+    const query: Record<string, unknown> = { status };
 
     if (industry) {
       query.industry = industry;
@@ -76,7 +78,7 @@ export async function GET(request: NextRequest) {
         pages: Math.ceil(total / limit),
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get jobs error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -92,10 +94,12 @@ export async function POST(request: NextRequest) {
       return authResult.error;
     }
 
-    // Only admins can create jobs
-    const adminError = requireAdmin(authResult.user);
-    if (adminError) {
-      return adminError;
+    // Allow both admins and employers to create jobs
+    if (authResult.user!.role !== "admin" && authResult.user!.role !== "employer") {
+      return NextResponse.json(
+        { error: "Admin or employer access required" },
+        { status: 403 }
+      );
     }
 
     await connectDB();
@@ -110,6 +114,17 @@ export async function POST(request: NextRequest) {
         { error: "Company not found" },
         { status: 404 }
       );
+    }
+
+    // If employer, verify they own the company
+    if (authResult.user!.role === "employer") {
+      const employer = await User.findById(authResult.user!.userId);
+      if (!employer?.company || employer.company.toString() !== validatedData.company) {
+        return NextResponse.json(
+          { error: "You can only create jobs for your own company" },
+          { status: 403 }
+        );
+      }
     }
 
     // Create job
@@ -135,19 +150,8 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      );
-    }
-
-    console.error("Create job error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 

@@ -4,9 +4,10 @@
  */
 
 import { jwtVerify, SignJWT } from "jose";
+import { env } from "@/lib/config/env";
 
-const JWT_SECRET = (process.env.JWT_SECRET || "your-secret-key-change-in-production").trim();
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const JWT_SECRET = env.JWT_SECRET.trim();
+const JWT_EXPIRES_IN = env.JWT_EXPIRES_IN;
 
 export interface JWTPayload {
   userId: string;
@@ -63,9 +64,11 @@ export async function verifyTokenEdge(token: string): Promise<JWTPayload> {
     });
 
     return payload as unknown as JWTPayload;
-  } catch (error: any) {
-    if (process.env.NODE_ENV === "development") {
-      console.error("[JWT Verification Error (Edge)]", error.message);
+  } catch (error) {
+    if (error instanceof Error) {
+      if (env.NODE_ENV === "development") {
+        console.error("[JWT Verification Error (Edge)]", error.message);
+      }
     }
     throw new Error("Invalid or expired token");
   }

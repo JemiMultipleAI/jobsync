@@ -1,9 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
+import { env } from "@/lib/config/env";
+import { logger } from "@/lib/logger";
 
 // Supabase configuration
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const SUPABASE_BUCKET_NAME = process.env.SUPABASE_BUCKET_NAME || "jobsync-uploads";
+const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_BUCKET_NAME = env.SUPABASE_BUCKET_NAME;
 
 // Initialize Supabase client with service role key (for server-side operations)
 const supabase = SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
@@ -39,7 +41,7 @@ export async function uploadToSupabase(options: UploadFileOptions): Promise<Uplo
     ? `${options.folder}/${options.filename}`
     : options.filename;
 
-  console.log("📤 Uploading to Supabase:", {
+  logger.debug("Uploading to Supabase:", {
     bucket: SUPABASE_BUCKET_NAME,
     filePath,
     fileSize: options.file.length,
@@ -55,31 +57,32 @@ export async function uploadToSupabase(options: UploadFileOptions): Promise<Uplo
     });
 
   if (error) {
-    console.error("❌ Supabase upload error:", {
+    logger.error("Supabase upload error:", {
       message: error.message,
       name: error.name,
-      error: error,
     });
     
-    // Check if bucket exists
-    const { data: buckets, error: listError } = await supabase.storage.listBuckets();
-    if (listError) {
-      console.error("❌ Cannot list buckets:", listError);
-    } else {
-      console.log("📦 Available buckets:", buckets?.map(b => b.name));
+    // Check if bucket exists (debug only)
+    if (env.NODE_ENV === "development") {
+      const { data: buckets, error: listError } = await supabase.storage.listBuckets();
+      if (listError) {
+        logger.error("Cannot list buckets:", listError.message);
+      } else {
+        logger.debug("Available buckets:", buckets?.map(b => b.name));
+      }
     }
     
     throw new Error(`Failed to upload file to Supabase: ${error.message}`);
   }
 
-  console.log("✅ Supabase upload successful:", data.path);
+  logger.debug("Supabase upload successful:", data.path);
 
   // Get public URL
   const { data: urlData } = supabase.storage
     .from(SUPABASE_BUCKET_NAME)
     .getPublicUrl(filePath);
 
-  console.log("🔗 Generated public URL:", urlData.publicUrl);
+  logger.debug("Generated public URL:", urlData.publicUrl);
 
   return {
     url: urlData.publicUrl,
@@ -105,7 +108,7 @@ export async function deleteFromSupabase(key: string): Promise<void> {
     fileKey = extractKeyFromUrl(key);
   }
 
-  console.log("🗑️ Deleting from Supabase:", {
+  logger.debug("Deleting from Supabase:", {
     originalKey: key,
     extractedKey: fileKey,
     bucket: SUPABASE_BUCKET_NAME,
@@ -116,16 +119,15 @@ export async function deleteFromSupabase(key: string): Promise<void> {
     .remove([fileKey]);
 
   if (error) {
-    console.error("❌ Supabase delete error:", {
+    logger.error("Supabase delete error:", {
       message: error.message,
       name: error.name,
       key: fileKey,
-      error: error,
     });
     throw new Error(`Failed to delete file from Supabase: ${error.message}`);
   }
   
-  console.log("✅ Successfully deleted from Supabase:", fileKey);
+  logger.debug("Successfully deleted from Supabase:", fileKey);
 }
 
 /**

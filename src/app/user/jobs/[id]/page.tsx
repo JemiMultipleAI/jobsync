@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,6 @@ import {
   Building2,
   Bookmark,
   CheckCircle,
-  X,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -65,36 +64,37 @@ export default function JobDetailPage() {
   const [isSaved, setIsSaved] = useState(false);
   const [applying, setApplying] = useState(false);
 
+  const fetchJob = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get<{ job: Job }>(`/api/jobs/${params.id}`);
+      setJob(response.job);
+    } catch (error) {
+      console.error("Error fetching job:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to load job details";
+      toast.error(errorMessage);
+      router.push("/user/jobs");
+    } finally {
+      setLoading(false);
+    }
+  }, [params.id, router, toast]);
+
+  const checkIfSaved = useCallback(async () => {
+    try {
+      const response = await apiClient.get<{ savedJobs: Array<{ job: { _id: string } }> }>("/api/saved-jobs");
+      const savedJobIds = response.savedJobs.map((sj) => sj.job._id);
+      setIsSaved(savedJobIds.includes(params.id as string));
+    } catch (_error) {
+      // Silently fail - user might not be logged in
+    }
+  }, [params.id]);
+
   useEffect(() => {
     if (params.id) {
       fetchJob();
       checkIfSaved();
     }
-  }, [params.id]);
-
-  const fetchJob = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get<{ job: Job }>(`/api/jobs/${params.id}`);
-      setJob(response.job);
-    } catch (error: any) {
-      console.error("Error fetching job:", error);
-      toast.error(error.message || "Failed to load job details");
-      router.push("/user/jobs");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkIfSaved = async () => {
-    try {
-      const response = await apiClient.get<{ savedJobs: any[] }>("/api/saved-jobs");
-      const savedJobIds = response.savedJobs.map((sj) => sj.job._id);
-      setIsSaved(savedJobIds.includes(params.id as string));
-    } catch (error) {
-      // Silently fail - user might not be logged in
-    }
-  };
+  }, [params.id, fetchJob, checkIfSaved]);
 
   const handleSaveJob = async () => {
     try {
@@ -107,9 +107,10 @@ export default function JobDetailPage() {
         setIsSaved(true);
         toast.success("Job saved successfully");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving job:", error);
-      toast.error(error.message || "Failed to save job");
+      const message = error instanceof Error ? error.message : "Failed to save job";
+      toast.error(message);
     }
   };
 
@@ -119,12 +120,14 @@ export default function JobDetailPage() {
       await apiClient.post("/api/applications", { job: params.id });
       toast.success("Application submitted successfully!");
       router.push("/user/applications");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error applying:", error);
-      if (error.message?.includes("already applied")) {
+      const errorMessage = error instanceof Error ? error.message : "";
+      if (errorMessage.includes("already applied")) {
         toast.error("You have already applied to this job");
       } else {
-        toast.error(error.message || "Failed to submit application");
+        const message = error instanceof Error ? error.message : "Failed to submit application";
+        toast.error(message);
       }
     } finally {
       setApplying(false);

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DataTable from "@/components/admin/DataTable";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/hooks/useToast";
 import { apiClient } from "@/lib/api/client";
-import { Building2, Plus, Trash2 } from "lucide-react";
+import { Building2, Plus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -55,24 +55,28 @@ export default function CompaniesPage() {
     established: "",
   });
 
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
-
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiClient.get<{ companies: Company[]; pagination: any }>(
+      const data = await apiClient.get<{ companies: Company[]; pagination: unknown }>(
         "/api/companies?limit=100"
       );
       setCompanies(data.companies);
-    } catch (error: any) {
-      console.error("Error fetching companies:", error);
-      toast.error(error.message || "Failed to load companies");
+    } catch (error) {
+      if (error instanceof Error) {
+        const message = error instanceof Error ? error.message : "Failed to load companies";
+        toast.error(message);
+      } else {
+        toast.error("Failed to load companies");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   const handleCreate = () => {
     setIsEditMode(false);
@@ -115,9 +119,10 @@ export default function CompaniesPage() {
       await apiClient.delete(`/api/companies/${company._id}`);
       toast.success("Company deleted successfully");
       fetchCompanies();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting company:", error);
-      toast.error(error.message || "Failed to delete company");
+      const message = error instanceof Error ? error.message : "Failed to delete company";
+      toast.error(message);
     }
   };
 
@@ -126,7 +131,7 @@ export default function CompaniesPage() {
     setSaving(true);
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         name: formData.name,
         industry: formData.industry,
         location: formData.location,
@@ -148,9 +153,10 @@ export default function CompaniesPage() {
 
       setIsDialogOpen(false);
       fetchCompanies();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving company:", error);
-      toast.error(error.message || "Failed to save company");
+      const message = error instanceof Error ? error.message : "Failed to save company";
+      toast.error(message);
     } finally {
       setSaving(false);
     }

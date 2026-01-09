@@ -82,9 +82,10 @@ export async function uploadToR2(options: UploadFileOptions): Promise<UploadResu
       url,
       key,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("R2 upload error:", error);
-    throw new Error(`Failed to upload file to R2: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to upload file to R2: ${errorMessage}`);
   }
 }
 
@@ -103,9 +104,10 @@ export async function deleteFromR2(key: string): Promise<void> {
 
   try {
     await s3Client.send(command);
-  } catch (error: any) {
+  } catch (error) {
     console.error("R2 delete error:", error);
-    throw new Error(`Failed to delete file from R2: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to delete file from R2: ${errorMessage}`);
   }
 }
 
@@ -126,9 +128,10 @@ export async function getPresignedUrl(key: string, expiresIn: number = 3600): Pr
   try {
     const url = await getSignedUrl(s3Client, command, { expiresIn });
     return url;
-  } catch (error: any) {
+  } catch (error) {
     console.error("R2 presigned URL error:", error);
-    throw new Error(`Failed to generate presigned URL: ${error.message}`);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to generate presigned URL: ${errorMessage}`);
   }
 }
 

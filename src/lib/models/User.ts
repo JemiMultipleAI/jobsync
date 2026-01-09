@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: "user" | "admin" | "employer";
+  company?: mongoose.Types.ObjectId; // Reference to Company (for employer role)
   bio?: string;
   phone?: string;
   location?: string;
@@ -43,6 +44,10 @@ const UserSchema = new Schema<IUser>(
       type: String,
       enum: ["user", "admin", "employer"],
       default: "user",
+    },
+    company: {
+      type: Schema.Types.ObjectId,
+      ref: "Company",
     },
     bio: {
       type: String,
@@ -84,7 +89,9 @@ UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     // Update profile completion if other fields changed
     if (this.isModified() && !this.isNew) {
-      this.profileCompletion = (this as any).calculateProfileCompletion();
+      if ('calculateProfileCompletion' in this && typeof (this as unknown as { calculateProfileCompletion: () => number }).calculateProfileCompletion === 'function') {
+        this.profileCompletion = (this as unknown as { calculateProfileCompletion: () => number }).calculateProfileCompletion();
+      }
     }
     return next();
   }
@@ -94,11 +101,11 @@ UserSchema.pre("save", async function (next) {
     this.password = await bcrypt.hash(this.password, salt);
     // Update profile completion
     if (!this.isNew) {
-      this.profileCompletion = (this as any).calculateProfileCompletion();
+      this.profileCompletion = (this as unknown as { calculateProfileCompletion: () => number }).calculateProfileCompletion();
     }
     next();
-  } catch (error: any) {
-    next(error);
+  } catch (error: unknown) {
+    next(error instanceof Error ? error : new Error(String(error)));
   }
 });
 

@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/hooks/useToast";
-import { apiClient } from "@/lib/api/client";
-import { Users, Search, Download, Mail, MapPin, Briefcase } from "lucide-react";
+import { Users, Search, Download, Mail, MapPin } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
@@ -30,15 +29,7 @@ export default function EmployerCandidatesPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    fetchCandidates();
-  }, []);
-
-  useEffect(() => {
-    filterCandidates();
-  }, [searchQuery, candidates]);
-
-  const fetchCandidates = async () => {
+  const fetchCandidates = useCallback(async () => {
     try {
       setLoading(true);
       // Note: This would typically be a dedicated candidates API endpoint
@@ -46,15 +37,16 @@ export default function EmployerCandidatesPage() {
       // that returns all users with role "user"
       toast.info("Candidates feature coming soon");
       setCandidates([]);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching candidates:", error);
-      toast.error(error.message || "Failed to load candidates");
+      const message = error instanceof Error ? error.message : "Failed to load candidates";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const filterCandidates = () => {
+  const filterCandidates = useCallback(() => {
     let filtered = [...candidates];
 
     if (searchQuery) {
@@ -69,7 +61,15 @@ export default function EmployerCandidatesPage() {
     }
 
     setFilteredCandidates(filtered);
-  };
+  }, [candidates, searchQuery]);
+
+  useEffect(() => {
+    fetchCandidates();
+  }, [fetchCandidates]);
+
+  useEffect(() => {
+    filterCandidates();
+  }, [filterCandidates]);
 
   const getInitials = (name: string) => {
     const parts = name.trim().split(" ");
@@ -209,5 +209,6 @@ export default function EmployerCandidatesPage() {
     </div>
   );
 }
+
 
 

@@ -1,8 +1,9 @@
 import jwt from "jsonwebtoken";
+import { env } from "@/lib/config/env";
 
 // Trim whitespace and newlines from JWT_SECRET to avoid issues
-const JWT_SECRET = (process.env.JWT_SECRET || "your-secret-key-change-in-production").trim();
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "7d";
+const JWT_SECRET = env.JWT_SECRET.trim();
+const JWT_EXPIRES_IN = env.JWT_EXPIRES_IN;
 
 export interface JWTPayload {
   userId: string;
@@ -20,10 +21,12 @@ export function verifyToken(token: string): JWTPayload {
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
     return decoded;
-  } catch (error: any) {
+  } catch (error) {
     // Log the actual error for debugging
-    if (process.env.NODE_ENV === "development") {
-      console.error("[JWT Verification Error]", error.message);
+    if (error instanceof Error) {
+      if (env.NODE_ENV === "development") {
+        console.error("[JWT Verification Error]", error.message);
+      }
     }
     throw new Error("Invalid or expired token");
   }

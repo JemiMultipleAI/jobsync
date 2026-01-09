@@ -8,8 +8,9 @@ export default function ConditionalFooter() {
   const isAuthPage = pathname?.startsWith("/auth");
   const isAdminPage = pathname?.startsWith("/admin");
   const isUserPage = pathname?.startsWith("/user");
+  const isEmployerPage = pathname?.startsWith("/employer");
 
-  if (isAuthPage || isAdminPage || isUserPage) {
+  if (isAuthPage || isAdminPage || isUserPage || isEmployerPage) {
     return null;
   }
 

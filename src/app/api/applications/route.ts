@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db/connect";
-import { Application, Job, Company } from "@/lib/models";
+import { Application, Job } from "@/lib/models";
 import { authenticateRequest } from "@/lib/api/middleware";
 import { z } from "zod";
 
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
 
-    const query: any = { applicant: authResult.user!.userId };
+    const query: Record<string, unknown> = { applicant: authResult.user!.userId };
 
     if (status && status !== "All") {
       query.status = status.toLowerCase().replace(" ", "-");
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         pages: Math.ceil(total / limit),
       },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Get applications error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -128,7 +128,7 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     );
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.issues },
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (error.code === 11000) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { error: "You have already applied to this job" },
         { status: 400 }

@@ -53,9 +53,10 @@ export default function Navbar() {
       await apiClient.post("/api/auth/logout");
       toast.success("Logged out successfully");
       router.push("/auth/login");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Logout error:", error);
-      toast.error(error.message || "Failed to logout");
+      const errorMessage = error instanceof Error ? error.message : "Failed to logout";
+      toast.error(errorMessage);
       // Still redirect even if logout fails
       router.push("/auth/login");
     }

@@ -7,7 +7,7 @@ import AnalyticsChart from "@/components/admin/AnalyticsChart";
 import { FileText, Bookmark, UserCheck, Building2 } from "lucide-react";
 import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/hooks/useToast";
@@ -18,26 +18,39 @@ import Link from "next/link";
 export default function UserDashboard() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
+  interface UserProfile {
+    _id: string;
+    name: string;
+    email: string;
+    profileCompletion: number;
+  }
+  const [_profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState({
     totalApplications: 0,
     activeApplications: 0,
     savedJobs: 0,
     profileCompletion: 0,
   });
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  interface RecentActivity {
+    type: string;
+    title: string;
+    date: string;
+  }
+  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [applicationsStatusData, setApplicationsStatusData] = useState<
     { name: string; value: number }[]
   >([]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const profileRes = await apiClient.get<{ user: any }>("/api/auth/profile");
+      interface UserProfile {
+        _id: string;
+        name: string;
+        email: string;
+        profileCompletion: number;
+      }
+      const profileRes = await apiClient.get<{ user: UserProfile }>("/api/auth/profile");
       setProfile(profileRes.user);
 
       // Note: Applications API doesn't exist yet, so we'll use mock data structure
@@ -59,13 +72,17 @@ export default function UserDashboard() {
         { name: "Rejected", value: 0 },
         { name: "Accepted", value: 0 },
       ]);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching dashboard data:", error);
       toast.error("Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   return (
     <div className="space-y-6">
@@ -216,7 +233,7 @@ export default function UserDashboard() {
           </div>
         ) : (
           <DataTable
-            data={recentActivity}
+            data={recentActivity as unknown as Record<string, unknown>[]}
             columns={[
               {
                 key: "action",

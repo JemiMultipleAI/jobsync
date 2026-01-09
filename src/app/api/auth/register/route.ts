@@ -3,6 +3,9 @@ import connectDB from "@/lib/db/connect";
 import User from "@/lib/models/User";
 import { generateToken } from "@/lib/auth/jwt";
 import { z } from "zod";
+import { handleApiError } from "@/lib/api/error-handler";
+import { env } from "@/lib/config/env";
+import { sanitizeString, sanitizeEmail } from "@/lib/utils/sanitize";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -16,7 +19,16 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     const body = await request.json();
-    const validatedData = registerSchema.parse(body);
+    
+    // Sanitize input before validation
+    const sanitizedBody = {
+      name: sanitizeString(body.name || ""),
+      email: sanitizeEmail(body.email || ""),
+      password: body.password, // Don't sanitize password - it will be hashed
+      role: body.role || "user",
+    };
+    
+    const validatedData = registerSchema.parse(sanitizedBody);
 
     // Check if user already exists
     const existingUser = await User.findOne({ email: validatedData.email });
@@ -60,33 +72,18 @@ export async function POST(request: NextRequest) {
     // Set HttpOnly cookie
     response.cookies.set("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: env.NODE_ENV === "production",
       sameSite: "strict",
       maxAge: 60 * 60 * 24 * 7, // 7 days
       path: "/",
+      ...(env.NODE_ENV === "production" && env.COOKIE_DOMAIN
+        ? { domain: env.COOKIE_DOMAIN }
+        : {}),
     });
 
     return response;
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      );
-    }
-
-    if (error.code === 11000) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 400 }
-      );
-    }
-
-    console.error("Registration error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 

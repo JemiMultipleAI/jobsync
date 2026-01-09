@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/hooks/useToast";
 import { apiClient } from "@/lib/api/client";
-import { FileText, Eye, Download, Mail } from "lucide-react";
+import { FileText, Download, Mail } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,11 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 
 interface Application {
   _id: string;
-  user: {
+  applicant: {
     _id: string;
     name: string;
     email: string;
@@ -36,6 +35,7 @@ interface Application {
   };
   status: string;
   coverLetter?: string;
+  appliedAt?: string;
   createdAt: string;
 }
 
@@ -46,71 +46,65 @@ export default function EmployerApplicationsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [selectedJob, setSelectedJob] = useState("all");
-  const [jobs, setJobs] = useState<any[]>([]);
-  const [userCompany, setUserCompany] = useState<any>(null);
+  const [jobs, setJobs] = useState<Array<{ _id: string; title: string; company: { _id: string } }>>([]);
+  const [userCompany, setUserCompany] = useState<{ _id: string; name: string } | null>(null);
 
-  useEffect(() => {
-    fetchUserCompany();
-    fetchApplications();
-  }, []);
-
-  useEffect(() => {
-    filterApplications();
-  }, [selectedStatus, selectedJob, applications]);
-
-  const fetchUserCompany = async () => {
+  const fetchUserCompany = useCallback(async () => {
     try {
-      const profileRes = await apiClient.get<{ user: any }>("/api/auth/profile");
-      const userId = profileRes.user._id;
-
-      const companiesRes = await apiClient.get<{ companies: any[] }>("/api/companies?limit=100");
-      const userCompanies = companiesRes.companies.filter((c: any) => c.createdBy === userId);
+      const profileRes = await apiClient.get<{ user: { _id: string; company?: string | { _id: string; name: string } } }>("/api/auth/profile");
       
-      if (userCompanies.length > 0) {
-        setUserCompany(userCompanies[0]);
+      // Use user.company from profile (new method)
+      if (profileRes.user.company) {
+        const companyId = typeof profileRes.user.company === 'string' 
+          ? profileRes.user.company 
+          : profileRes.user.company._id;
         
-        // Fetch jobs for this company
-        const jobsRes = await apiClient.get<{ jobs: any[] }>("/api/jobs?limit=100");
-        const companyJobs = jobsRes.jobs.filter((j: any) => j.company._id === userCompanies[0]._id);
-        setJobs(companyJobs);
+        // Fetch company details
+        const companyRes = await apiClient.get<{ company: { _id: string; name: string } }>(
+          `/api/companies/${companyId}`
+        );
+        setUserCompany(companyRes.company);
+        
+        // Fetch jobs for this company (already filtered by API)
+        const jobsRes = await apiClient.get<{ jobs: Array<{ _id: string; title: string; company: { _id: string } }> }>("/api/employer/jobs?limit=100");
+        setJobs(jobsRes.jobs || []);
+      } else {
+        toast.info("Please create or link a company profile first");
       }
-    } catch (error: any) {
-      console.error("Error fetching user company:", error);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load company information";
+      toast.error(message);
     }
-  };
+  }, [toast]);
 
-  const fetchApplications = async () => {
+  const fetchApplications = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiClient.get<{ applications: Application[]; pagination: any }>(
-        "/api/applications?limit=100"
+      // Use employer-specific endpoint (already filtered by company)
+      const data = await apiClient.get<{ applications: Application[]; pagination: unknown }>(
+        "/api/employer/applications?limit=100"
       );
-      
-      // Filter applications for jobs posted by this employer
-      if (userCompany) {
-        const employerJobIds = jobs.map((j: any) => j._id);
-        const filtered = data.applications.filter((app: Application) => 
-          employerJobIds.includes(app.job?._id || app.job)
-        );
-        setApplications(filtered);
-      } else {
-        setApplications(data.applications);
-      }
-    } catch (error: any) {
-      console.error("Error fetching applications:", error);
-      toast.error(error.message || "Failed to load applications");
+      setApplications(data.applications || []);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load applications";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
-    if (userCompany && jobs.length > 0) {
+    fetchUserCompany();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (userCompany) {
       fetchApplications();
     }
-  }, [userCompany, jobs]);
+  }, [userCompany, fetchApplications]);
 
-  const filterApplications = () => {
+  const filterApplications = useCallback(() => {
     let filtered = [...applications];
 
     if (selectedStatus !== "all") {
@@ -124,7 +118,11 @@ export default function EmployerApplicationsPage() {
     }
 
     setFilteredApplications(filtered);
-  };
+  }, [selectedStatus, selectedJob, applications]);
+
+  useEffect(() => {
+    filterApplications();
+  }, [filterApplications]);
 
   const updateApplicationStatus = async (applicationId: string, newStatus: string) => {
     try {
@@ -133,9 +131,9 @@ export default function EmployerApplicationsPage() {
       });
       toast.success("Application status updated");
       fetchApplications();
-    } catch (error: any) {
-      console.error("Error updating application:", error);
-      toast.error(error.message || "Failed to update application");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update application";
+      toast.error(message);
     }
   };
 
@@ -243,7 +241,7 @@ export default function EmployerApplicationsPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-xl font-semibold">
-                      {application.user?.name || "Unknown Candidate"}
+                      {application.applicant?.name || "Unknown Candidate"}
                     </h3>
                     {getStatusBadge(application.status)}
                   </div>
@@ -251,7 +249,7 @@ export default function EmployerApplicationsPage() {
                     Applied for: <span className="font-medium">{application.job?.title}</span>
                   </p>
                   <p className="text-sm text-muted-foreground mb-3">
-                    Applied on {formatDate(application.createdAt)}
+                    Applied on {formatDate(application.appliedAt || application.createdAt)}
                   </p>
                   {application.coverLetter && (
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
@@ -259,11 +257,11 @@ export default function EmployerApplicationsPage() {
                     </p>
                   )}
                   <div className="flex gap-2">
-                    {application.user?.resume && (
+                    {application.applicant?.resume && (
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.open(application.user.resume, "_blank")}
+                        onClick={() => window.open(application.applicant.resume, "_blank")}
                       >
                         <Download className="mr-2 h-4 w-4" />
                         View Resume
@@ -272,7 +270,7 @@ export default function EmployerApplicationsPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.location.href = `mailto:${application.user?.email}`}
+                      onClick={() => window.location.href = `mailto:${application.applicant?.email}`}
                     >
                       <Mail className="mr-2 h-4 w-4" />
                       Contact

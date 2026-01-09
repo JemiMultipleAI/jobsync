@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, uploadToSupabase, deleteFromSupabase, extractKeyFromUrl, type UploadResult } from "./supabase";
 import { uploadToLocal, deleteFromLocal, type UploadFileOptions as LocalUploadOptions } from "./local";
+import { logger } from "@/lib/logger";
 
 export interface UploadFileOptions {
   file: Buffer;
@@ -12,17 +13,13 @@ export interface UploadFileOptions {
  * otherwise falls back to local filesystem storage
  */
 export async function uploadFile(options: UploadFileOptions): Promise<UploadResult> {
-  console.log("Storage check:", {
+  logger.debug("Storage check:", {
     supabaseConfigured: isSupabaseConfigured(),
-    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    bucketName: process.env.SUPABASE_BUCKET_NAME || "jobsync-uploads",
-    urlValue: process.env.NEXT_PUBLIC_SUPABASE_URL ? "SET" : "NOT SET",
-    keyValue: process.env.SUPABASE_SERVICE_ROLE_KEY ? "SET" : "NOT SET",
+    folder: options.folder || "root",
   });
   
   if (isSupabaseConfigured()) {
-    console.log("✅ Using Supabase storage for:", options.folder || "root");
+    logger.debug("Using Supabase storage for:", options.folder || "root");
     return uploadToSupabase({
       file: options.file,
       filename: options.filename,
@@ -30,19 +27,19 @@ export async function uploadFile(options: UploadFileOptions): Promise<UploadResu
       folder: options.folder,
     });
   } else {
-    console.log("⚠️ Using local storage (Supabase not configured) for:", options.folder || "root");
+    logger.warn("Using local storage (Supabase not configured) for:", options.folder || "root");
     return uploadToLocal(options as LocalUploadOptions);
   }
 }
 
 export async function deleteFile(urlOrKey: string): Promise<void> {
   if (isSupabaseConfigured()) {
-    console.log("🗑️ Deleting from Supabase:", urlOrKey);
+    logger.debug("Deleting from Supabase:", urlOrKey);
     // If it's a full URL, extract the key
     const key = urlOrKey.startsWith("http") ? extractKeyFromUrl(urlOrKey) : urlOrKey;
     return deleteFromSupabase(key);
   } else {
-    console.log("🗑️ Deleting from local storage:", urlOrKey);
+    logger.debug("Deleting from local storage:", urlOrKey);
     // For local storage, the key is the path
     return deleteFromLocal(urlOrKey);
   }

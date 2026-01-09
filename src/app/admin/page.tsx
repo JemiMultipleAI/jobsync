@@ -6,7 +6,7 @@ import DataTable from "@/components/admin/DataTable";
 import AnalyticsChart from "@/components/admin/AnalyticsChart";
 import { Users, Building2, CheckCircle2, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/hooks/useToast";
@@ -24,25 +24,26 @@ export default function AdminDashboard() {
     totalCompanies: 0,
     pendingApprovals: 0,
   });
-  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [recentActivity, setRecentActivity] = useState<Array<{
+    id: number;
+    action: string;
+    user: string;
+    item: string;
+    time: string;
+    status: string;
+  }>>([]);
   const [jobsData, setJobsData] = useState<{ name: string; count: number }[]>([]);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const [jobsRes, companiesRes] = await Promise.all([
-        apiClient.get<{ jobs: any[]; pagination: any }>("/api/jobs?limit=100"),
-        apiClient.get<{ companies: any[]; pagination: any }>("/api/companies?limit=100"),
+        apiClient.get<{ jobs: Array<{ status: string; createdAt: string; company?: { name: string }; title: string }>; pagination: { total: number } }>("/api/jobs?limit=100"),
+        apiClient.get<{ companies: Array<{ verified: boolean }>; pagination: { total: number } }>("/api/companies?limit=100"),
         // Note: We don't have a users API yet, so we'll skip it for now
       ]);
 
       const totalJobs = jobsRes.pagination.total || 0;
-      const activeJobs = jobsRes.jobs.filter((j) => j.status === "active").length;
-      const totalCompanies = companiesRes.pagination.total || 0;
       const verifiedCompanies = companiesRes.companies.filter((c) => c.verified).length;
       const pendingCompanies = companiesRes.companies.filter((c) => !c.verified).length;
 
@@ -83,13 +84,21 @@ export default function AdminDashboard() {
         };
       });
       setJobsData(monthsData);
-    } catch (error: any) {
-      console.error("Error fetching dashboard data:", error);
-      toast.error("Failed to load dashboard data");
+    } catch (error) {
+      if (error instanceof Error) {
+        const message = error instanceof Error ? error.message : "Failed to load dashboard data";
+        toast.error(message);
+      } else {
+        toast.error("Failed to load dashboard data");
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);

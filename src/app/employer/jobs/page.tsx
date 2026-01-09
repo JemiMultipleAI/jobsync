@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -12,7 +12,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Eye,
 } from "lucide-react";
 import {
   Dialog,
@@ -65,7 +64,6 @@ export default function EmployerJobsPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingJob, setEditingJob] = useState<Job | null>(null);
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
   const [userCompany, setUserCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -83,62 +81,63 @@ export default function EmployerJobsPage() {
     salaryPeriod: "year",
   });
 
+  const fetchUserCompany = useCallback(async () => {
+    try {
+      const profileRes = await apiClient.get<{ 
+        user: { 
+          _id: string; 
+          company?: string | { _id: string; name: string } 
+        } 
+      }>("/api/auth/profile");
+      
+      // Use user.company from profile (new method)
+      if (profileRes.user.company) {
+        const companyId = typeof profileRes.user.company === 'string' 
+          ? profileRes.user.company 
+          : profileRes.user.company._id;
+        
+        // Fetch company details
+        const companyRes = await apiClient.get<{ company: Company }>(
+          `/api/companies/${companyId}`
+        );
+        setUserCompany(companyRes.company);
+        setFormData(prev => ({ ...prev, company: companyRes.company._id }));
+      } else {
+        toast.info("Please create or link a company profile first");
+      }
+    } catch (error) {
+      console.error("Error fetching user company:", error);
+      const message = error instanceof Error ? error.message : "Failed to load company information";
+      toast.error(message);
+    }
+  }, [toast]);
+
   useEffect(() => {
     fetchUserCompany();
-    fetchJobs();
-  }, []);
+  }, [fetchUserCompany]);
 
-  const fetchUserCompany = async () => {
-    try {
-      const profileRes = await apiClient.get<{ user: any }>("/api/auth/profile");
-      const userId = profileRes.user._id;
-
-      // Fetch companies created by this user
-      const companiesRes = await apiClient.get<{ companies: Company[] }>("/api/companies?limit=100");
-      const userCompanies = companiesRes.companies.filter((c: any) => c.createdBy === userId);
-      
-      if (userCompanies.length > 0) {
-        setUserCompany(userCompanies[0]);
-        setCompanies(userCompanies);
-        setFormData(prev => ({ ...prev, company: userCompanies[0]._id }));
-      } else {
-        // If no company exists, we'll need to create one or show a message
-        toast.info("Please create a company profile first");
-      }
-    } catch (error: any) {
-      console.error("Error fetching user company:", error);
-    }
-  };
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await apiClient.get<{ jobs: Job[]; pagination: any }>(
-        "/api/jobs?limit=100"
+      // Use employer-specific endpoint (already filtered by company)
+      const data = await apiClient.get<{ jobs: Job[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
+        "/api/employer/jobs?limit=100"
       );
-      
-      // Filter jobs by user's company
-      if (userCompany) {
-        const filteredJobs = data.jobs.filter((job) => 
-          job.company._id === userCompany._id
-        );
-        setJobs(filteredJobs);
-      } else {
-        setJobs(data.jobs);
-      }
-    } catch (error: any) {
+      setJobs(data.jobs || []);
+    } catch (error) {
       console.error("Error fetching jobs:", error);
-      toast.error(error.message || "Failed to load jobs");
+      const message = error instanceof Error ? error.message : "Failed to load jobs";
+      toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     if (userCompany) {
       fetchJobs();
     }
-  }, [userCompany]);
+  }, [userCompany, fetchJobs]);
 
   const handleCreate = () => {
     if (!userCompany) {
@@ -189,9 +188,10 @@ export default function EmployerJobsPage() {
       await apiClient.delete(`/api/jobs/${job._id}`);
       toast.success("Job deleted successfully");
       fetchJobs();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting job:", error);
-      toast.error(error.message || "Failed to delete job");
+      const message = error instanceof Error ? error.message : "Failed to delete job";
+      toast.error(message);
     }
   };
 
@@ -205,7 +205,7 @@ export default function EmployerJobsPage() {
     setSaving(true);
 
     try {
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         title: formData.title,
         company: formData.company || userCompany._id,
         type: formData.type,
@@ -234,9 +234,10 @@ export default function EmployerJobsPage() {
 
       setIsDialogOpen(false);
       fetchJobs();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving job:", error);
-      toast.error(error.message || "Failed to save job");
+      const message = error instanceof Error ? error.message : "Failed to save job";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -556,5 +557,6 @@ export default function EmployerJobsPage() {
     </div>
   );
 }
+
 
 

@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.issues },
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (error.code === 11000) {
+    if (error && typeof error === 'object' && 'code' in error && error.code === 11000) {
       return NextResponse.json(
         { error: "User with this email already exists" },
         { status: 400 }

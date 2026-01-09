@@ -41,7 +41,8 @@ interface User {
   _id: string;
   name: string;
   email: string;
-  role: "user" | "admin";
+  role: "user" | "admin" | "employer";
+  company?: string | { _id: string; name: string };
   createdAt: string;
   profileCompletion?: number;
 }
@@ -60,19 +61,18 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    role: "user" as "user" | "admin",
+    role: "user" as "user" | "admin" | "employer",
+    company: "none",
   });
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  const [companies, setCompanies] = useState<Array<{ _id: string; name: string }>>([]);
+  const [loadingCompanies, setLoadingCompanies] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiClient.get<{
         users: User[];
-        pagination: any;
+        pagination: { page: number; limit: number; total: number; pages: number };
       }>("/api/admin/users?limit=100");
 
       // API returns { users: [...], pagination: {...} }
@@ -81,15 +81,42 @@ export default function UsersPage() {
       } else {
         setUsers([]);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching users:", error);
-      toast.error(error.message || "Failed to load users");
+      const message = error instanceof Error ? error.message : "Failed to load users";
+      toast.error(message);
       setUsers([]);
     } finally {
       setLoading(false);
     }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  const fetchCompanies = useCallback(async () => {
+    try {
+      setLoadingCompanies(true);
+      const res = await apiClient.get<{ companies: Array<{ _id: string; name: string }> }>(
+        "/api/companies?limit=100"
+      );
+      setCompanies(res.companies || []);
+    } catch (error) {
+      console.error("Error fetching companies:", error);
+      const message = error instanceof Error ? error.message : "Failed to load companies";
+      toast.error(message);
+    } finally {
+      setLoadingCompanies(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (formData.role === "employer") {
+      fetchCompanies();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [formData.role]);
 
   const handleCreate = () => {
     setIsEditMode(false);
@@ -98,6 +125,7 @@ export default function UsersPage() {
       name: "",
       email: "",
       role: "user",
+      company: "none",
     });
     setIsDialogOpen(true);
   };
@@ -105,10 +133,14 @@ export default function UsersPage() {
   const handleEdit = (user: User) => {
     setIsEditMode(true);
     setEditingUser(user);
+    const companyId = typeof user.company === 'string' 
+      ? user.company 
+      : user.company?._id || "";
     setFormData({
       name: user.name,
       email: user.email,
       role: user.role,
+      company: companyId || "none",
     });
     setIsDialogOpen(true);
   };
@@ -129,9 +161,10 @@ export default function UsersPage() {
       setDeleteDialogOpen(false);
       setUserToDelete(null);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error deleting user:", error);
-      toast.error(error.message || "Failed to delete user");
+      const message = error instanceof Error ? error.message : "Failed to delete user";
+      toast.error(message);
     }
   };
 
@@ -141,9 +174,14 @@ export default function UsersPage() {
 
     try {
       if (isEditMode && editingUser) {
+        // Convert "none" back to empty string for API
+        const submitData = {
+          ...formData,
+          company: formData.company === "none" ? "" : formData.company
+        };
         await apiClient.put<{ message?: string; user?: User }>(
           `/api/admin/users/${editingUser._id}`,
-          formData
+          submitData
         );
         toast.success("User updated successfully");
         setIsDialogOpen(false);
@@ -153,9 +191,10 @@ export default function UsersPage() {
         // For now, users should register normally
         toast.error("User creation is not available. Users must register themselves.");
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error saving user:", error);
-      toast.error(error.message || "Failed to save user");
+      const message = error instanceof Error ? error.message : "Failed to save user";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -296,8 +335,8 @@ export default function UsersPage() {
                 <Label htmlFor="role">Role *</Label>
                 <Select
                   value={formData.role}
-                  onValueChange={(value: "user" | "admin") =>
-                    setFormData({ ...formData, role: value })
+                  onValueChange={(value: "user" | "admin" | "employer") =>
+                    setFormData({ ...formData, role: value, company: "none" })
                   }
                 >
                   <SelectTrigger>
@@ -305,10 +344,38 @@ export default function UsersPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="employer">Employer</SelectItem>
                     <SelectItem value="admin">Admin</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+              {formData.role === "employer" && (
+                <div className="grid gap-2">
+                  <Label htmlFor="company">Company (Optional)</Label>
+                  <Select
+                    value={formData.company}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, company: value })
+                    }
+                    disabled={loadingCompanies}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={loadingCompanies ? "Loading companies..." : "Select a company"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">None (Link later)</SelectItem>
+                      {companies.map((comp) => (
+                        <SelectItem key={comp._id} value={comp._id}>
+                          {comp.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Select a company to link this employer to, or leave blank for them to link later.
+                  </p>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button

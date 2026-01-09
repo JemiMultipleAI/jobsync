@@ -14,7 +14,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Start closed on mobile
-  const [mounted, setMounted] = useState(false);
+  const [_mounted, setMounted] = useState(false);
 
   // Handle responsive behavior - only after mount to avoid hydration mismatch
   useEffect(() => {

@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
     if (user.profileImage) {
       try {
         await deleteFile(user.profileImage);
-      } catch (error) {
-        console.error("Error deleting old profile image:", error);
+      } catch (_error) {
+        console.error("Error deleting old profile image:", _error);
         // Continue even if deletion fails
       }
     }
@@ -86,7 +86,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Recalculate profile completion
-    updatedUser.profileCompletion = (updatedUser as any).calculateProfileCompletion();
+    if ('calculateProfileCompletion' in updatedUser && typeof (updatedUser as { calculateProfileCompletion: () => number }).calculateProfileCompletion === 'function') {
+      updatedUser.profileCompletion = (updatedUser as { calculateProfileCompletion: () => number }).calculateProfileCompletion();
+    }
     await updatedUser.save();
 
     return NextResponse.json({
@@ -94,10 +96,10 @@ export async function POST(request: NextRequest) {
       profileImage: uploadResult.url,
       profileCompletion: updatedUser.profileCompletion,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Profile image upload error:", error);
     return NextResponse.json(
-      { error: error.message || "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }

@@ -76,7 +76,7 @@ export default function ApplicationsPage() {
 
       const response = await apiClient.get<{
         applications: Application[];
-        pagination: any;
+        pagination: { page: number; limit: number; total: number; pages: number };
       }>(`/api/applications?${params.toString()}`);
 
       // API returns { applications: [...], pagination: {...} }
@@ -85,9 +85,10 @@ export default function ApplicationsPage() {
       } else {
         setApplications([]);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching applications:", error);
-      toast.error(error.message || "Failed to load applications");
+      const message = error instanceof Error ? error.message : "Failed to load applications";
+      toast.error(message);
       setApplications([]);
     } finally {
       setLoading(false);
@@ -125,9 +126,10 @@ export default function ApplicationsPage() {
       setWithdrawDialogOpen(false);
       setSelectedApplication(null);
       fetchApplications();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error withdrawing application:", error);
-      toast.error(error.message || "Failed to withdraw application");
+      const message = error instanceof Error ? error.message : "Failed to withdraw application";
+      toast.error(message);
     }
   };
 
@@ -263,7 +265,7 @@ export default function ApplicationsPage() {
                     <div>
                       <div className="font-medium">{String(value)}</div>
                       <div className="text-xs text-muted-foreground">
-                        {(row as any).location}
+                        {(row as { location?: string }).location}
                       </div>
                     </div>
                   ),

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import connectDB from "@/lib/db/connect";
 import Company from "@/lib/models/Company";
+import User from "@/lib/models/User";
 import { authenticateRequest, requireAdmin } from "@/lib/api/middleware";
+import { handleApiError } from "@/lib/api/error-handler";
 import { z } from "zod";
 
 const updateCompanySchema = z.object({
@@ -28,6 +30,7 @@ export async function GET(
 
     const company = await Company.findById(id)
       .populate("createdBy", "name email")
+      .populate("members", "name email")
       .lean();
 
     if (!company) {
@@ -38,12 +41,8 @@ export async function GET(
     }
 
     return NextResponse.json({ company });
-  } catch (error: any) {
-    console.error("Get company error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 
@@ -58,25 +57,10 @@ export async function PUT(
       return authResult.error;
     }
 
-    // Only admins can update companies
-    const adminError = requireAdmin(authResult.user);
-    if (adminError) {
-      return adminError;
-    }
-
     await connectDB();
 
-    const body = await request.json();
-    const validatedData = updateCompanySchema.parse(body);
-
-    const company = await Company.findByIdAndUpdate(
-      id,
-      { $set: validatedData },
-      { new: true, runValidators: true }
-    )
-      .populate("createdBy", "name email")
-      .lean();
-
+    // Check if company exists
+    const company = await Company.findById(id);
     if (!company) {
       return NextResponse.json(
         { error: "Company not found" },
@@ -84,23 +68,48 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json({
-      message: "Company updated successfully",
-      company,
-    });
-  } catch (error: any) {
-    if (error instanceof z.ZodError) {
+    // Allow admins or employers who are linked to this company
+    if (authResult.user!.role === "admin") {
+      // Admins can update any company
+    } else if (authResult.user!.role === "employer") {
+      // Employers can only update their own company
+      const employer = await User.findById(authResult.user!.userId);
+      if (!employer || employer.company?.toString() !== id) {
+        return NextResponse.json(
+          { error: "You can only update your own company" },
+          { status: 403 }
+        );
+      }
+    } else {
       return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
+        { error: "Admin or employer access required" },
+        { status: 403 }
       );
     }
 
-    console.error("Update company error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    const body = await request.json();
+    const validatedData = updateCompanySchema.parse(body);
+
+    // Only admins can update verified status
+    if (authResult.user!.role !== "admin" && "verified" in validatedData) {
+      delete validatedData.verified;
+    }
+
+    const updatedCompany = await Company.findByIdAndUpdate(
+      id,
+      { $set: validatedData },
+      { new: true, runValidators: true }
+    )
+      .populate("createdBy", "name email")
+      .populate("members", "name email")
+      .lean();
+
+    return NextResponse.json({
+      message: "Company updated successfully",
+      company: updatedCompany,
+    });
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 
@@ -135,7 +144,7 @@ export async function DELETE(
     return NextResponse.json({
       message: "Company deleted successfully",
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Delete company error:", error);
     return NextResponse.json(
       { error: "Internal server error" },

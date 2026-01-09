@@ -69,7 +69,7 @@ export default function SavedJobsPage() {
       setLoading(true);
       const response = await apiClient.get<{
         savedJobs: SavedJob[];
-        pagination: any;
+        pagination: { page: number; limit: number; total: number; pages: number };
       }>("/api/saved-jobs?limit=100");
 
       // API returns { savedJobs: [...], pagination: {...} }
@@ -78,9 +78,10 @@ export default function SavedJobsPage() {
       } else {
         setSavedJobs([]);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching saved jobs:", error);
-      toast.error(error.message || "Failed to load saved jobs");
+      const message = error instanceof Error ? error.message : "Failed to load saved jobs";
+      toast.error(message);
       setSavedJobs([]);
     } finally {
       setLoading(false);
@@ -117,9 +118,10 @@ export default function SavedJobsPage() {
       setRemoveDialogOpen(false);
       setSelectedJob(null);
       fetchSavedJobs();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error removing saved job:", error);
-      toast.error(error.message || "Failed to remove job");
+      const message = error instanceof Error ? error.message : "Failed to remove job";
+      toast.error(message);
     }
   };
 

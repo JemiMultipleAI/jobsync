@@ -1,14 +1,7 @@
 import mongoose from "mongoose";
 // Import all models to ensure they're registered with Mongoose
 import "@/lib/models";
-
-const MONGODB_URI = process.env.MONGODB_URI || "";
-
-if (!MONGODB_URI) {
-  throw new Error(
-    "Please define the MONGODB_URI environment variable inside .env.local"
-  );
-}
+import { env } from "@/lib/config/env";
 
 interface MongooseCache {
   conn: typeof mongoose | null;
@@ -17,7 +10,6 @@ interface MongooseCache {
 
 // Use global cache to prevent multiple connections in development
 declare global {
-  // eslint-disable-next-line no-var
   var mongoose: MongooseCache | undefined;
 }
 
@@ -37,7 +29,7 @@ async function connectDB(): Promise<typeof mongoose> {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(env.MONGODB_URI, opts).then((mongoose) => {
       return mongoose;
     });
   }

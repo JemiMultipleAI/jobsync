@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import DashboardCard from "@/components/admin/DashboardCard";
 import { User } from "lucide-react"
 import React from "react"
@@ -43,10 +43,22 @@ export default function ProfilePage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  interface UserProfile {
+    _id: string;
+    name: string;
+    email: string;
+    bio?: string;
+    phone?: string;
+    location?: string;
+    skills: string[];
+    profileImage?: string;
+    resume?: string;
+    profileCompletion: number;
+  }
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [newSkill, setNewSkill] = useState("");
-  const [mounted, setMounted] = useState(false);
+  const [_mounted, setMounted] = useState(false);
   const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -55,14 +67,9 @@ export default function ProfilePage() {
     location: "",
   });
 
-  useEffect(() => {
-    setMounted(true);
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
-      const data = await apiClient.get<{ user: any }>("/api/auth/profile");
+      const data = await apiClient.get<{ user: UserProfile }>("/api/auth/profile");
       setUser(data.user);
       setFormData({
         name: data.user.name || "",
@@ -71,9 +78,10 @@ export default function ProfilePage() {
         location: data.user.location || "",
       });
       setSkills(data.user.skills || []);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching profile:", error);
-      if (error.message?.includes("401") || error.message?.includes("Unauthorized")) {
+      const errorMessage = error instanceof Error ? error.message : "";
+      if (errorMessage.includes("401") || errorMessage.includes("Unauthorized")) {
         router.push("/auth/login");
         return;
       }
@@ -81,7 +89,12 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router, toast]);
+
+  useEffect(() => {
+    setMounted(true);
+    fetchProfile();
+  }, [fetchProfile]);
 
   const addSkill = () => {
     if (newSkill.trim() && !skills.includes(newSkill.trim())) {
@@ -97,7 +110,7 @@ export default function ProfilePage() {
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
-      const updateData: any = {};
+      const updateData: Record<string, unknown> = {};
 
       if (formData.name) updateData.name = formData.name;
       if (formData.bio !== undefined) updateData.bio = formData.bio;
@@ -105,7 +118,7 @@ export default function ProfilePage() {
       if (formData.location) updateData.location = formData.location;
       if (skills) updateData.skills = skills;
 
-      const data = await apiClient.put<{ message?: string; user: any }>("/api/auth/profile", updateData);
+      const data = await apiClient.put<{ message?: string; user: UserProfile }>("/api/auth/profile", updateData);
 
       if (data.user) {
         setUser(data.user);
@@ -120,13 +133,15 @@ export default function ProfilePage() {
       } else {
         throw new Error("Invalid response from server");
       }
-    } catch (error: any) {
-      if (error.message?.includes("Validation error") || error.details) {
-        const details = error.details || [];
-        const errorMessages = details.map((d: any) => `${d.path.join(".")}: ${d.message}`).join(", ");
-        toast.error(`Validation error: ${errorMessages || error.message}`);
+    } catch (error) {
+      if (error instanceof Error && (error.message.includes("Validation error") || (error as { details?: unknown }).details)) {
+        const errorWithDetails = error as { details?: Array<{ path: string[]; message: string }>; message: string };
+        const details = errorWithDetails.details || [];
+        const errorMessages = details.map((d) => `${d.path.join(".")}: ${d.message}`).join(", ");
+        toast.error(`Validation error: ${errorMessages || errorWithDetails.message}`);
       } else {
-        toast.error(error.message || "Failed to update profile");
+        const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
+        toast.error(errorMessage);
       }
     } finally {
       setSaving(false);
@@ -158,11 +173,14 @@ export default function ProfilePage() {
         formData
       );
 
-      setUser({ ...user, profileImage: data.profileImage, profileCompletion: data.profileCompletion });
+      if (user) {
+        setUser({ ...user, profileImage: data.profileImage, profileCompletion: data.profileCompletion });
+      }
       toast.success("Profile image uploaded successfully!");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error(error.message || "Failed to upload image");
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload image";
+      toast.error(errorMessage);
     }
   };
 
@@ -196,11 +214,14 @@ export default function ProfilePage() {
         formData
       );
 
-      setUser({ ...user, resume: data.resume, profileCompletion: data.profileCompletion });
+      if (user) {
+        setUser({ ...user, resume: data.resume, profileCompletion: data.profileCompletion });
+      }
       toast.success("Resume uploaded successfully!");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error uploading resume:", error);
-      toast.error(error.message || "Failed to upload resume");
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload resume";
+      toast.error(errorMessage);
     }
   };
 
@@ -549,6 +570,7 @@ export default function ProfilePage() {
                 <Button
                   type="button"
                   onClick={() => {
+                    if (!user.resume) return;
                     const link = document.createElement("a");
                     link.href = user.resume;
                     link.download = user.resume.split("/").pop() || "resume.pdf";
