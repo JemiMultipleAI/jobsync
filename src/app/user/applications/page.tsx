@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import DashboardCard from "@/components/admin/DashboardCard";
-import DataTable from "@/components/admin/DataTable";
+import DashboardCard from "@/components/shared/DashboardCard";
+import DataTable from "@/components/shared/DataTable";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useLanguage } from "@/lib/contexts/LanguageContext";
 
 interface Application {
   _id: string;
@@ -40,14 +41,7 @@ interface Application {
   appliedAt: string;
 }
 
-const statusFilters = [
-  "All",
-  "Pending",
-  "Under Review",
-  "Shortlisted",
-  "Rejected",
-  "Accepted",
-];
+// Status filters will be translated in the component
 
 const statusMap: Record<string, string> = {
   pending: "Pending",
@@ -59,6 +53,7 @@ const statusMap: Record<string, string> = {
 
 export default function ApplicationsPage() {
   const toast = useToast();
+  const { t } = useLanguage();
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [applications, setApplications] = useState<Application[]>([]);
   const [filteredData, setFilteredData] = useState<Application[]>([]);
@@ -122,7 +117,7 @@ export default function ApplicationsPage() {
       await apiClient.delete<{ message?: string }>(
         `/api/applications/${selectedApplication._id}`
       );
-      toast.success("Application withdrawn successfully");
+      toast.success(t("applications.withdrawn"));
       setWithdrawDialogOpen(false);
       setSelectedApplication(null);
       fetchApplications();
@@ -158,7 +153,7 @@ export default function ApplicationsPage() {
   };
 
   const formatSalary = (salary?: { min?: number; max?: number; currency?: string }) => {
-    if (!salary || (!salary.min && !salary.max)) return "Not specified";
+    if (!salary || (!salary.min && !salary.max)) return t("applications.notSpecified");
     const currency = salary.currency || "AUD";
     if (salary.min && salary.max) {
       return `${currency} ${salary.min.toLocaleString()} - ${salary.max.toLocaleString()}`;
@@ -181,9 +176,9 @@ export default function ApplicationsPage() {
             <FileText className="h-6 w-6 text-[#B260E6]" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Applications</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t("applications.title")}</h1>
             <p className="text-muted-foreground mt-1">
-              Track and manage your job applications.
+              {t("applications.description")}
             </p>
           </div>
         </div>
@@ -191,27 +186,32 @@ export default function ApplicationsPage() {
 
       {/* Filter Buttons */}
       <div className="flex flex-wrap gap-2">
-        {statusFilters.map((filter) => {
+        {[t("applications.all"), t("applications.pending"), t("applications.underReview"), t("applications.shortlisted"), t("applications.rejected"), t("applications.accepted")].map((filter) => {
+          const filterKey = filter === t("applications.all") ? "All" : 
+                           filter === t("applications.pending") ? "Pending" :
+                           filter === t("applications.underReview") ? "Under Review" :
+                           filter === t("applications.shortlisted") ? "Shortlisted" :
+                           filter === t("applications.rejected") ? "Rejected" : "Accepted";
           const count =
-            filter === "All"
+            filterKey === "All"
               ? applications.length
               : applications.filter(
-                  (app) => statusMap[app.status] === filter
+                  (app) => statusMap[app.status] === filterKey
                 ).length;
           return (
             <Button
               key={filter}
-              variant={selectedFilter === filter ? "default" : "outline"}
+              variant={selectedFilter === filterKey ? "default" : "outline"}
               size="sm"
-              onClick={() => handleFilter(filter)}
+              onClick={() => handleFilter(filterKey)}
               className={
-                selectedFilter === filter
+                selectedFilter === filterKey
                   ? "bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5]"
                   : ""
               }
             >
               {filter}
-              {filter !== "All" && (
+              {filterKey !== "All" && (
                 <Badge
                   variant="secondary"
                   className="ml-2 bg-background/50 text-xs"
@@ -228,22 +228,20 @@ export default function ApplicationsPage() {
       {loading ? (
         <div className="text-center py-12">
           <div className="w-8 h-8 border-4 border-[#B260E6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading applications...</p>
+          <p className="text-muted-foreground">{t("applications.loading")}</p>
         </div>
       ) : (
         <DashboardCard
-          title={`${filteredData.length} Application${
-            filteredData.length !== 1 ? "s" : ""
-          }`}
-          description="Your job application history"
+          title={`${filteredData.length} ${filteredData.length !== 1 ? t("applications.countPlural") : t("applications.count")}`}
+          description={t("applications.history")}
         >
           {filteredData.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">
                 {selectedFilter === "All"
-                  ? "You haven't applied to any jobs yet"
-                  : `No ${selectedFilter.toLowerCase()} applications`}
+                  ? t("applications.noApplications")
+                  : `${t("applications.noFiltered")} ${selectedFilter.toLowerCase()} ${t("applications.applications")}`}
               </p>
             </div>
           ) : (
@@ -260,7 +258,7 @@ export default function ApplicationsPage() {
               columns={[
                 {
                   key: "jobTitle",
-                  label: "Job Title",
+                  label: t("applications.jobTitle"),
                   render: (value, row) => (
                     <div>
                       <div className="font-medium">{String(value)}</div>
@@ -272,19 +270,19 @@ export default function ApplicationsPage() {
                 },
                 {
                   key: "company",
-                  label: "Company",
+                  label: t("applications.company"),
                   render: (value) => (
                     <span className="font-medium">{String(value)}</span>
                   ),
                 },
                 {
                   key: "appliedDate",
-                  label: "Applied Date",
+                  label: t("applications.appliedDate"),
                   render: (value) => formatDate(value as string),
                 },
                 {
                   key: "status",
-                  label: "Status",
+                  label: t("applications.status"),
                   render: (value) => (
                     <Badge variant={getStatusBadgeVariant(value as string)}>
                       {String(value)}
@@ -293,13 +291,13 @@ export default function ApplicationsPage() {
                 },
                 {
                   key: "salary",
-                  label: "Salary",
+                  label: t("applications.salary"),
                 },
               ]}
               searchable={true}
-              searchPlaceholder="Search applications..."
+              searchPlaceholder={t("applications.search")}
               actions={true}
-              editLabel="View"
+              editLabel={t("applications.view")}
               onEdit={(row) => {
                 // Handle view action - could navigate to job detail
                 console.log("View application", row);
@@ -319,20 +317,19 @@ export default function ApplicationsPage() {
       <AlertDialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Withdraw Application?</AlertDialogTitle>
+            <AlertDialogTitle>{t("applications.withdrawTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to withdraw your application for{" "}
-              <strong>{selectedApplication?.job.title}</strong>? This action
-              cannot be undone.
+              {t("applications.withdrawDesc")}{" "}
+              <strong>{selectedApplication?.job.title}</strong>? {t("applications.withdrawWarning")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleWithdraw}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Withdraw
+              {t("applications.withdraw")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

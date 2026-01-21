@@ -40,6 +40,12 @@ export const env = {
   R2_BUCKET_NAME: getOptionalEnv("R2_BUCKET_NAME", ""),
   R2_PUBLIC_URL: getOptionalEnv("R2_PUBLIC_URL", ""),
 
+  // OpenAI (optional - for AI resume builder)
+  OPENAI_API_KEY: getOptionalEnv("OPENAI_API_KEY", ""),
+
+  // App URL (for WebSocket)
+  NEXT_PUBLIC_APP_URL: getOptionalEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3000"),
+
   // Node environment
   NODE_ENV: process.env.NODE_ENV || "development",
 } as const;

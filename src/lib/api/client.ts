@@ -4,7 +4,8 @@
  */
 
 export interface ApiError {
-  error: string;
+  error?: string;
+  message?: string;
   details?: unknown;
 }
 
@@ -34,13 +35,41 @@ class ApiClient {
       const response = await fetch(url, config);
 
       if (!response.ok) {
-        const error: ApiError = await response.json();
-        throw new Error(error.error || `HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        let errorDetails: unknown = undefined;
+        try {
+          const error: ApiError = await response.json();
+          errorMessage = error.error || error.message || errorMessage;
+          if (error.details) {
+            errorDetails = error.details;
+            console.error("API Error Details:", error.details);
+          }
+        } catch (parseError) {
+          // If response is not JSON, try to get text
+          try {
+            const text = await response.text();
+            if (text) {
+              errorMessage = text;
+            }
+          } catch {
+            // Ignore
+          }
+        }
+        const apiError = new Error(errorMessage) as Error & { details?: unknown };
+        if (errorDetails) {
+          apiError.details = errorDetails;
+        }
+        throw apiError;
       }
 
-      return await response.json();
+      const data = await response.json();
+      return data;
     } catch (error: unknown) {
       if (error instanceof Error) {
+        // Log the error for debugging
+        if (process.env.NODE_ENV === "development") {
+          console.error(`API Request Error [${endpoint}]:`, error.message);
+        }
         throw error;
       }
       throw new Error("Network error occurred");
@@ -54,6 +83,23 @@ class ApiClient {
 
   // POST request
   async post<T>(endpoint: string, data?: unknown): Promise<T> {
+    // If data is FormData, don't stringify it and don't set Content-Type
+    if (data instanceof FormData) {
+      const url = `${this.baseUrl}${endpoint}`;
+      const response = await fetch(url, {
+        method: "POST",
+        body: data,
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error: ApiError = await response.json();
+        throw new Error(error.error || `HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    }
+
     return this.request<T>(endpoint, {
       method: "POST",
       body: data ? JSON.stringify(data) : undefined,

@@ -1,9 +1,9 @@
 "use client";
 
-import StatWidget from "@/components/admin/StatWidget";
-import DashboardCard from "@/components/admin/DashboardCard";
-import DataTable from "@/components/admin/DataTable";
-import AnalyticsChart from "@/components/admin/AnalyticsChart";
+import StatWidget from "@/components/shared/StatWidget";
+import DashboardCard from "@/components/shared/DashboardCard";
+import DataTable from "@/components/shared/DataTable";
+import AnalyticsChart from "@/components/shared/AnalyticsChart";
 import { FileText, Bookmark, UserCheck, Building2 } from "lucide-react";
 import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -14,6 +14,43 @@ import { useToast } from "@/lib/hooks/useToast";
 import { apiClient } from "@/lib/api/client";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+// Fallback translation function
+const t = (key: string) => {
+  const translations: Record<string, string> = {
+    "dashboard.title": "Dashboard",
+    "dashboard.welcome": "Welcome back! Here's your overview.",
+    "dashboard.totalApplications": "Total Applications",
+    "dashboard.totalApplicationsDesc": "All your job applications",
+    "dashboard.activeApplications": "Active Applications",
+    "dashboard.activeApplicationsDesc": "Currently under review",
+    "dashboard.savedJobs": "Saved Jobs",
+    "dashboard.savedJobsDesc": "Jobs you've bookmarked",
+    "dashboard.profileCompletion": "Profile Completion",
+    "dashboard.profileCompletionDesc": "Complete your profile",
+    "dashboard.applicationsStatus": "Application Status",
+    "dashboard.applicationsStatusDesc": "Overview of your application statuses",
+    "dashboard.quickActions": "Quick Actions",
+    "dashboard.quickActionsDesc": "Common tasks and shortcuts",
+    "dashboard.browseJobs": "Browse Jobs",
+    "dashboard.browseJobsDesc": "Search for opportunities",
+    "dashboard.viewCompanies": "View Companies",
+    "dashboard.viewCompaniesDesc": "Explore employers",
+    "dashboard.updateProfile": "Update Profile",
+    "dashboard.updateProfileDesc": "Keep your profile current",
+    "dashboard.savedJobsLink": "Saved Jobs",
+    "dashboard.savedJobsLinkDesc": "View bookmarked positions",
+    "dashboard.recentActivity": "Recent Activity",
+    "dashboard.recentActivityDesc": "Your latest job application activity",
+    "dashboard.viewAll": "View All",
+    "dashboard.noRecentActivity": "No recent activity. Start applying to jobs!",
+    "dashboard.action": "Action",
+    "dashboard.job": "Job",
+    "dashboard.company": "Company",
+    "dashboard.time": "Time",
+    "dashboard.status": "Status",
+  };
+  return translations[key] || key;
+};
 
 export default function UserDashboard() {
   const toast = useToast();
@@ -51,34 +88,80 @@ export default function UserDashboard() {
         profileCompletion: number;
       }
       const profileRes = await apiClient.get<{ user: UserProfile }>("/api/auth/profile");
+      
+      if (!profileRes || !profileRes.user) {
+        throw new Error("Invalid response from server");
+      }
+      
       setProfile(profileRes.user);
 
-      // Note: Applications API doesn't exist yet, so we'll use mock data structure
-      // In the future, replace with: const appsRes = await apiClient.get("/api/applications");
+      // Fetch applications
+      const appsRes = await apiClient.get<{
+        applications: Array<{ status: string }>;
+        pagination: { total: number };
+      }>("/api/applications?limit=100");
+      
+      const applications = appsRes.applications || [];
+      const totalApplications = appsRes.pagination?.total || applications.length;
+      const activeApplications = applications.filter(
+        (app) => app.status === "pending" || app.status === "under-review" || app.status === "shortlisted"
+      ).length;
+
+      // Fetch saved jobs
+      const savedJobsRes = await apiClient.get<{
+        savedJobs: unknown[];
+        pagination: { total: number };
+      }>("/api/saved-jobs?limit=100");
+      
+      const savedJobsCount = savedJobsRes.pagination?.total || (savedJobsRes.savedJobs?.length || 0);
       
       setStats({
-        totalApplications: 0, // Would come from applications API
-        activeApplications: 0, // Would come from applications API
-        savedJobs: 0, // Would come from saved jobs API
+        totalApplications,
+        activeApplications,
+        savedJobs: savedJobsCount,
         profileCompletion: profileRes.user.profileCompletion || 0,
       });
 
-      // Mock recent activity - in future, fetch from applications API
-      setRecentActivity([]);
-      setApplicationsStatusData([
-        { name: "Pending", value: 0 },
-        { name: "Under Review", value: 0 },
-        { name: "Shortlisted", value: 0 },
-        { name: "Rejected", value: 0 },
-        { name: "Accepted", value: 0 },
-      ]);
+      // Process applications for chart data - only include statuses with applications
+      const statusCounts: Record<string, number> = {};
+      applications.forEach((app: any) => {
+        const status = app.status || "pending";
+        const displayStatus = status
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+        statusCounts[displayStatus] = (statusCounts[displayStatus] || 0) + 1;
+      });
+
+      // Only include statuses that have at least 1 application
+      const chartData = Object.entries(statusCounts)
+        .filter(([_, count]) => count > 0)
+        .map(([name, value]) => ({ name, value }));
+      
+      setApplicationsStatusData(chartData);
+
+      // Create recent activity from applications with proper structure
+      const activity = applications.slice(0, 5).map((app: any) => ({
+        action: t("dashboard.applied"),
+        job: app.job?.title || "Unknown Job",
+        company: app.job?.company?.name || "Unknown Company",
+        time: new Date(app.appliedAt || app.createdAt).toLocaleDateString(),
+        status: app.status || "pending",
+      }));
+      setRecentActivity(activity);
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      toast.error("Failed to load dashboard data");
+      const errorMessage = error instanceof Error ? error.message : "Failed to load dashboard data";
+      if (errorMessage.includes("401") || errorMessage.includes("Unauthorized") || errorMessage.includes("Authentication")) {
+        // Redirect handled by middleware or component
+        toast.error("Please log in again");
+      } else {
+        toast.error(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -92,9 +175,9 @@ export default function UserDashboard() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("dashboard.title")}</h1>
         <p className="text-muted-foreground mt-1">
-          Welcome back! Here&apos;s an overview of your job search activity.
+          {t("dashboard.welcome")}
         </p>
       </motion.div>
 
@@ -108,31 +191,31 @@ export default function UserDashboard() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatWidget
-            title="Total Applications"
+            title={t("dashboard.totalApplications")}
             value={stats.totalApplications.toString()}
             icon={FileText}
-            description="All applications"
+            description={t("dashboard.totalApplicationsDesc")}
             trend={{ value: 0, isPositive: true }}
           />
           <StatWidget
-            title="Active Applications"
+            title={t("dashboard.activeApplications")}
             value={stats.activeApplications.toString()}
             icon={CheckCircle}
-            description="In progress"
+            description={t("dashboard.activeApplicationsDesc")}
             trend={{ value: 0, isPositive: true }}
           />
           <StatWidget
-            title="Saved Jobs"
+            title={t("dashboard.savedJobs")}
             value={stats.savedJobs.toString()}
             icon={Bookmark}
-            description="Bookmarked jobs"
+            description={t("dashboard.savedJobsDesc")}
             trend={{ value: 0, isPositive: true }}
           />
           <StatWidget
-            title="Profile Completion"
+            title={t("dashboard.profileCompletion")}
             value={`${stats.profileCompletion}%`}
             icon={UserCheck}
-            description="Profile strength"
+            description={t("dashboard.profileCompletionDesc")}
             trend={{ value: 0, isPositive: true }}
           />
         </div>
@@ -144,8 +227,8 @@ export default function UserDashboard() {
           <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />
         ) : (
           <AnalyticsChart
-            title="Applications Status Distribution"
-            description="Breakdown of your application statuses"
+            title={t("dashboard.applicationsStatus")}
+            description={t("dashboard.applicationsStatusDesc")}
             data={applicationsStatusData}
             type="pie"
             dataKey="value"
@@ -156,33 +239,33 @@ export default function UserDashboard() {
           <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />
         ) : (
           <DashboardCard
-            title="Quick Actions"
-            description="Common tasks"
+            title={t("dashboard.quickActions")}
+            description={t("dashboard.quickActionsDesc")}
           >
             <div className="grid grid-cols-2 gap-3">
               {[
                 {
                   icon: FileText,
-                  label: "Browse Jobs",
-                  desc: "Find opportunities",
+                  label: t("dashboard.browseJobs"),
+                  desc: t("dashboard.browseJobsDesc"),
                   href: "/user/jobs",
                 },
                 {
                   icon: Building2,
-                  label: "View Companies",
-                  desc: "Explore employers",
+                  label: t("dashboard.viewCompanies"),
+                  desc: t("dashboard.viewCompaniesDesc"),
                   href: "/user/companies",
                 },
                 {
                   icon: UserCheck,
-                  label: "Update Profile",
-                  desc: "Complete your profile",
+                  label: t("dashboard.updateProfile"),
+                  desc: t("dashboard.updateProfileDesc"),
                   href: "/user/profile",
                 },
                 {
                   icon: Bookmark,
-                  label: "Saved Jobs",
-                  desc: "View saved positions",
+                  label: t("dashboard.savedJobsLink"),
+                  desc: t("dashboard.savedJobsLinkDesc"),
                   href: "/user/saved-jobs",
                 },
               ].map((action, index) => {
@@ -209,12 +292,12 @@ export default function UserDashboard() {
 
       {/* Recent Activity */}
       <DashboardCard
-        title="Recent Activity"
-        description="Your latest job search actions"
+        title={t("dashboard.recentActivity")}
+        description={t("dashboard.recentActivityDesc")}
         action={
           <Link href="/user/applications">
             <Button variant="ghost" size="sm">
-              View All
+              {t("dashboard.viewAll")}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -224,10 +307,10 @@ export default function UserDashboard() {
           <div className="h-32 bg-gray-100 rounded-lg animate-pulse" />
         ) : recentActivity.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-muted-foreground">No recent activity</p>
+            <p className="text-muted-foreground">{t("dashboard.noRecentActivity")}</p>
             <Link href="/user/jobs">
               <Button variant="outline" className="mt-4">
-                Browse Jobs
+                {t("dashboard.browseJobs")}
               </Button>
             </Link>
           </div>
@@ -237,36 +320,42 @@ export default function UserDashboard() {
             columns={[
               {
                 key: "action",
-                label: "Action",
+                label: t("dashboard.action"),
                 render: (value) => (
                   <span className="font-medium">{String(value)}</span>
                 ),
               },
               {
                 key: "job",
-                label: "Job",
+                label: t("dashboard.job"),
               },
               {
                 key: "company",
-                label: "Company",
+                label: t("dashboard.company"),
               },
               {
                 key: "time",
-                label: "Time",
+                label: t("dashboard.time"),
               },
               {
                 key: "status",
-                label: "Status",
+                label: t("dashboard.status"),
                 render: (value) => {
+                  const status = String(value);
+                  const displayStatus = status
+                    .split("-")
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ");
                   const variants = {
-                    active: "default",
                     pending: "secondary",
-                    completed: "outline",
-                    saved: "secondary",
+                    "under-review": "default",
+                    shortlisted: "default",
+                    rejected: "destructive",
+                    accepted: "default",
                   } as const;
                   return (
-                    <Badge variant={variants[value as keyof typeof variants] || "outline"}>
-                      {String(value)}
+                    <Badge variant={variants[status as keyof typeof variants] || "outline"}>
+                      {displayStatus}
                     </Badge>
                   );
                 },

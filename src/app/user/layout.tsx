@@ -1,8 +1,8 @@
 "use client";
 
 import { useState,  useEffect  } from "react"
-import Sidebar from "@/components/dashboard/Sidebar";
-import Navbar from "@/components/dashboard/Navbar";
+import Sidebar from "@/components/layout/Sidebar/UserSidebar";
+import Navbar from "@/components/layout/Navbar/UserNavbar";
 
 import { motion } from "framer-motion";
 

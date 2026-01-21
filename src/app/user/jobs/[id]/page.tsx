@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import DashboardCard from "@/components/admin/DashboardCard";
+import DashboardCard from "@/components/shared/DashboardCard";
 import { useToast } from "@/lib/hooks/useToast";
 import { apiClient } from "@/lib/api/client";
 import Link from "next/link";

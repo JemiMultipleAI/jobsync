@@ -1,7 +1,7 @@
 "use client";
 
-import StatWidget from "@/components/admin/StatWidget";
-import DashboardCard from "@/components/admin/DashboardCard";
+import StatWidget from "@/components/shared/StatWidget";
+import DashboardCard from "@/components/shared/DashboardCard";
 import { Briefcase, FileText, Users, TrendingUp } from "lucide-react";
 import { useCallback } from "react";
 import { motion } from "framer-motion";

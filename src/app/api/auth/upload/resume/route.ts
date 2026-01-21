@@ -9,6 +9,7 @@ const ALLOWED_TYPES = [
   "application/pdf",
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "text/html",
 ];
 
 export async function POST(request: NextRequest) {

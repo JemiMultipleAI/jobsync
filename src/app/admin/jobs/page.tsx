@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import DataTable from "@/components/admin/DataTable";
+import DataTable from "@/components/shared/DataTable";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";

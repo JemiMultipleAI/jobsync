@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Geist,  Geist_Mono  } from "next/font/google"
 import "./globals.css";
-import ConditionalNavbar from "@/components/ConditionalNavbar";
-import ConditionalFooter from "@/components/ConditionalFooter";
+import ConditionalNavbar from "@/components/shared/ConditionalNavbar";
+import ConditionalFooter from "@/components/shared/ConditionalFooter";
 import { Toaster } from "sonner";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { ThemeProvider } from "@/lib/contexts/ThemeContext";
+import { LanguageProvider } from "@/lib/contexts/LanguageContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,16 +39,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
           suppressHydrationWarning
         >
         <ErrorBoundary>
-          <ConditionalNavbar />
-          {children}
-          <ConditionalFooter />
-          <Toaster position="top-right" richColors />
+          <ThemeProvider>
+            <LanguageProvider>
+              <ConditionalNavbar />
+              {children}
+              <ConditionalFooter />
+              <Toaster position="top-right" richColors />
+            </LanguageProvider>
+          </ThemeProvider>
         {/* <iframe
           src="https://jobsync.gcucsstudent.site/"
           style={{

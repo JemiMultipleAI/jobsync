@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import DashboardCard from "@/components/admin/DashboardCard";
+import DashboardCard from "@/components/shared/DashboardCard";
 import { Card, CardContent } from "@/components/ui/card";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/lib/hooks/useToast";
 import { apiClient } from "@/lib/api/client";
 import Link from "next/link";
+import { useLanguage } from "@/lib/contexts/LanguageContext";
 import { Eye, Briefcase } from "lucide-react";
 
 import {
@@ -48,6 +49,7 @@ interface Company {
 
 export default function CompaniesPage() {
   const toast = useToast();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIndustry, setSelectedIndustry] = useState("All");
   const [selectedLocation, setSelectedLocation] = useState("All");
@@ -102,6 +104,14 @@ export default function CompaniesPage() {
     setSelectedLocation("All");
   };
 
+  // Fetch companies on mount and when filters change
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
+
+  // Check if any filters are applied
+  const hasFilters = searchQuery !== "" || selectedIndustry !== "All" || selectedLocation !== "All";
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -115,9 +125,9 @@ export default function CompaniesPage() {
             <Building2 className="h-6 w-6 text-[#B260E6]" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Companies</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t("companies.title")}</h1>
             <p className="text-muted-foreground mt-1">
-              {loading ? "Loading..." : `Explore companies and find your perfect match (${companies.length} companies)`}
+              {loading ? t("companies.loading") : `${t("companies.exploreCompanies")} (${companies.length} ${t("companies.title").toLowerCase()})`}
             </p>
           </div>
         </div>
@@ -126,15 +136,15 @@ export default function CompaniesPage() {
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1">
-          <DashboardCard title="Filters" description="Refine your search">
+          <DashboardCard title={t("companies.filters")} description={t("companies.refineSearch")}>
             <div className="space-y-4">
               {/* Search */}
               <div className="space-y-2">
-                <Label>Search</Label>
+                <Label>{t("common.search")}</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search companies..."
+                    placeholder={t("companies.search")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -144,7 +154,7 @@ export default function CompaniesPage() {
 
               {/* Industry */}
               <div className="space-y-2">
-                <Label>Industry</Label>
+                <Label>{t("jobs.industry")}</Label>
                 <Select
                   value={selectedIndustry}
                   onValueChange={(value) => {
@@ -155,7 +165,7 @@ export default function CompaniesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Industries</SelectItem>
+                    <SelectItem value="All">{t("jobs.allIndustries")}</SelectItem>
                     <SelectItem value="Technology">Technology</SelectItem>
                     <SelectItem value="Construction">Construction</SelectItem>
                     <SelectItem value="Healthcare">Healthcare</SelectItem>
@@ -167,7 +177,7 @@ export default function CompaniesPage() {
 
               {/* Location */}
               <div className="space-y-2">
-                <Label>Location</Label>
+                <Label>{t("jobs.location")}</Label>
                 <Select
                   value={selectedLocation}
                   onValueChange={(value) => {
@@ -178,7 +188,7 @@ export default function CompaniesPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Locations</SelectItem>
+                    <SelectItem value="All">{t("jobs.allLocations")}</SelectItem>
                     <SelectItem value="Sydney">Sydney</SelectItem>
                     <SelectItem value="Melbourne">Melbourne</SelectItem>
                     <SelectItem value="Brisbane">Brisbane</SelectItem>
@@ -192,7 +202,7 @@ export default function CompaniesPage() {
               {/* Reset Filters */}
               <Button variant="outline" className="w-full" onClick={resetFilters}>
                 <Filter className="mr-2 h-4 w-4" />
-                Reset Filters
+                {t("jobs.resetFilters")}
               </Button>
             </div>
           </DashboardCard>
@@ -201,17 +211,22 @@ export default function CompaniesPage() {
         {/* Companies Grid */}
         <div className="lg:col-span-3">
           {loading ? (
-            <DashboardCard title="Loading..." description="Fetching companies">
+            <DashboardCard title={t("companies.loading")} description={t("companies.fetchingCompanies")}>
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="w-8 h-8 border-4 border-[#B260E6] border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-muted-foreground">Loading companies...</p>
+                <p className="text-muted-foreground">{t("companies.loadingCompanies")}</p>
               </div>
             </DashboardCard>
           ) : companies.length === 0 ? (
-            <DashboardCard title="No Companies Found" description="Try adjusting your filters">
+            <DashboardCard 
+              title={hasFilters ? t("companies.noCompaniesFound") : t("companies.noCompaniesAvailable")} 
+              description={hasFilters ? t("companies.tryAdjustingFilters") : t("companies.checkBackLater")}
+            >
               <div className="flex flex-col items-center justify-center py-12">
                 <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No companies match your criteria</p>
+                <p className="text-muted-foreground">
+                  {hasFilters ? t("error.noCompaniesWithFilter") : t("error.noCompanies")}
+                </p>
               </div>
             </DashboardCard>
           ) : (
@@ -288,12 +303,12 @@ export default function CompaniesPage() {
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Users className="h-4 w-4" />
-                          <span>{company.employees || "N/A"} employees</span>
+                          <span>{company.employees || "N/A"} {t("companies.employees")}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Briefcase className="h-4 w-4" />
                           <span className="font-medium text-[#B260E6]">
-                            {company.openJobs} open jobs
+                            {company.openJobs} {t("companies.openJobs")}
                           </span>
                         </div>
                       </div>
@@ -302,14 +317,14 @@ export default function CompaniesPage() {
                         <Link href={`/companies/${company._id}`}>
                           <Button variant="outline" className="flex-1 rounded-xl">
                             <Eye className="mr-2 h-4 w-4" />
-                            View Profile
+                            {t("companies.viewProfile")}
                           </Button>
                         </Link>
                         <Link href={`/companies/${company._id}/jobs`}>
                           <Button
                             className="flex-1 rounded-xl bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] hover:scale-[1.02] transition-transform"
                           >
-                            View Jobs
+                            {t("companies.viewJobs")}
                           </Button>
                         </Link>
                       </div>
