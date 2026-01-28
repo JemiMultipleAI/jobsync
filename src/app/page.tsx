@@ -36,32 +36,32 @@ export default function Home() {
   const industries = [
     {
       name: "Construction",
-      image: "/images/construction.png",
+      image: "/images/construction.PNG",
       verified: true,
     },
     {
       name: "Education",
-      image: "/images/learning.png",
+      image: "/images/learning.PNG",
       verified: true,
     },
     {
       name: "Energy",
-      image: "/images/energy 1.png",
+      image: "/images/energy%201.PNG",
       verified: true,
     },
     {
       name: "Logistics",
-      image: "/images/logistics 1.png",
+      image: "/images/logistics%201.PNG",
       verified: true,
     },
     {
       name: "Healthcare",
-      image: "/images/healthcare 1.png",
+      image: "/images/healthcare%201.PNG",
       verified: true,
     },
     {
       name: "Mining",
-      image: "/images/mining 1.png",
+      image: "/images/mining%201.PNG",
       verified: true,
     },
   ];
@@ -95,7 +95,7 @@ export default function Home() {
       salary: "$75,000 - $95,000/year",
       type: "Full-time",
       posted: "2 days ago",
-      image: "/images/plumber.png",
+      image: "/images/plumber.PNG",
     },
     {
       title: "Commercial Electrician",
@@ -104,7 +104,7 @@ export default function Home() {
       salary: "$85,000 - $110,000/year",
       type: "Full-time",
       posted: "1 day ago",
-      image: "/images/electrician.png",
+      image: "/images/electrician.PNG",
     },
     {
       title: "Construction Site Manager",
@@ -113,7 +113,7 @@ export default function Home() {
       salary: "$120,000 - $150,000/year",
       type: "Full-time",
       posted: "3 days ago",
-      image: "/images/construction.png",
+      image: "/images/construction.PNG",
     },
     {
       title: "Heavy Vehicle Driver  Logistics",
@@ -122,7 +122,7 @@ export default function Home() {
       salary: "$65,000 - $80,000/year",
       type: "Full-time",
       posted: "4 days ago",
-      image: "/images/driver.png",
+      image: "/images/driver.PNG",
     },
     {
       title: "Senior Painter / Decorator",
@@ -131,7 +131,7 @@ export default function Home() {
       salary: "$55,000 - $70,000/year",
       type: "Full-time",
       posted: "5 days ago",
-      image: "/images/painter.png",
+      image: "/images/painter.PNG",
     },
     {
       title: "Chef de Partie  Hotel Kitchen",
@@ -140,7 +140,7 @@ export default function Home() {
       salary: "$60,000 - $75,000/year",
       type: "Full-time",
       posted: "2 days ago",
-      image: "/images/chef.png",
+      image: "/images/chef.PNG",
     },
   ];
 
@@ -473,7 +473,7 @@ export default function Home() {
             <Card className="border-0 shadow-lg p-8">
               <div className="flex items-center mb-6">
                 <Image
-                  src="/images/sarah.png"
+                  src="/images/sarah.PNG"
                   alt="Sarah Johnson"
                   width={80}
                   height={80}
@@ -499,7 +499,7 @@ export default function Home() {
             <Card className="border-0 shadow-lg p-8">
               <div className="flex items-center mb-6">
                 <Image
-                  src="/images/micheal.png"
+                  src="/images/micheal.PNG"
                   alt="Michael Chen"
                   width={80}
                   height={80}

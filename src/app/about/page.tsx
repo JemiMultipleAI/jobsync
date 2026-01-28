@@ -37,7 +37,7 @@ avatar : "/images/micheal.PNG",
       name: "David Wilson",
       role: "Head of Product",
       bio: "Product leader with focus on user-centered design and Australian market needs",
-avatar : "/images/david.png",
+avatar : "/images/david.PNG",
       location: "Perth, WA",
       expertise: ["UX Design", "Product Strategy", "Market Research"]
     },
@@ -112,25 +112,25 @@ const milestones = [
       icon: <Heart className="h-8 w-8" />,
       title: "Community First",
       description: "We prioritize the needs of Australian workers and businesses above all else",
-      image: "/images/community.png"
+      image: "/images/community.PNG"
     },
     {
       icon: <Trophy className="h-8 w-8" />,
       title: "Excellence",
       description: "We deliver exceptional service and outcomes for every Australian we serve",
-     image: "/images/exellence.png"
+     image: "/images/exellence.PNG"
     },
     {
       icon: <Users className="h-8 w-8" />,
       title: "Inclusion",
       description: "We celebrate Australia&apos;s diversity and create opportunities for everyone",
-      image: "/images/inclusion.png"
+      image: "/images/inclusion.PNG"
     },
     {
       icon: <MapPin className="h-8 w-8" />,
       title: "Local Impact",
       description: "We&apos;re committed to strengthening Australian communities and economies",
-      image: "/images/local.png"
+      image: "/images/local.PNG"
     },
   ];
 

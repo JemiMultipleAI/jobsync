@@ -83,7 +83,7 @@ export default function JobsPage() {
       salary: "$75,000 - $95,000/year",
       type: "Full-time",
       posted: "2 days ago",
-      image: "/images/plumber.png",
+      image: "/images/plumber.PNG",
     },
     {
       title: "Commercial Electrician",
@@ -92,7 +92,7 @@ export default function JobsPage() {
       salary: "$85,000 - $110,000/year",
       type: "Full-time",
       posted: "1 day ago",
-      image: "/images/electrician.png",
+      image: "/images/electrician.PNG",
     },
     {
       title: "Construction Site Manager",
@@ -101,7 +101,7 @@ export default function JobsPage() {
       salary: "$120,000 - $150,000/year",
       type: "Full-time",
       posted: "3 days ago",
-      image: "/images/construction.png",
+      image: "/images/construction.PNG",
     },
     {
       title: "Heavy Vehicle Driver Logistics",
@@ -110,7 +110,7 @@ export default function JobsPage() {
       salary: "$65,000 - $80,000/year",
       type: "Full-time",
       posted: "4 days ago",
-      image: "/images/driver.png",
+      image: "/images/driver.PNG",
     },
     {
       title: "Senior Painter / Decorator",
@@ -119,7 +119,7 @@ export default function JobsPage() {
       salary: "$55,000 - $70,000/year",
       type: "Full-time",
       posted: "5 days ago",
-      image: "/images/painter.png",
+      image: "/images/painter.PNG",
     },
     {
       title: "Chef de Partie Hotel Kitchen",
@@ -128,7 +128,7 @@ export default function JobsPage() {
       salary: "$60,000 - $75,000/year",
       type: "Full-time",
       posted: "2 days ago",
-      image: "/images/chef.png",
+      image: "/images/chef.PNG",
     },
   ];
 
