@@ -10,6 +10,7 @@ import { logger } from "@/lib/logger";
 const loginSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
     const validatedData = loginSchema.parse({
       email: (body.email || "").toLowerCase().trim(),
       password: body.password,
+      rememberMe: body.rememberMe || false,
     });
 
     // Find user and include password
@@ -70,11 +72,16 @@ export async function POST(request: NextRequest) {
 
     // Set HttpOnly cookie
     // Note: Don't set domain in development (localhost), let browser handle it
+    // If rememberMe is true, extend cookie to 30 days, otherwise 7 days
+    const cookieMaxAge = validatedData.rememberMe 
+      ? 60 * 60 * 24 * 30 // 30 days
+      : 60 * 60 * 24 * 7; // 7 days
+    
     const cookieOptions = {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
       sameSite: "lax" as const,
-      maxAge: 60 * 60 * 24 * 7, // 7 days (in seconds)
+      maxAge: cookieMaxAge,
       path: "/",
       ...(env.NODE_ENV === "production" && env.COOKIE_DOMAIN
         ? { domain: env.COOKIE_DOMAIN }

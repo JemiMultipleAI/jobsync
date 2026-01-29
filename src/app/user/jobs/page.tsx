@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import DashboardCard from "@/components/admin/DashboardCard";
+import DashboardCard from "@/components/shared/DashboardCard";
 import { Card, CardContent } from "@/components/ui/card";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/lib/hooks/useToast";
 import { apiClient } from "@/lib/api/client";
 import Link from "next/link";
+import { useLanguage } from "@/lib/contexts/LanguageContext";
 
 import { Briefcase } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -54,6 +55,7 @@ interface Job {
 
 export default function BrowseJobsPage() {
   const toast = useToast();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("All");
   const [selectedLocation, setSelectedLocation] = useState("All");
@@ -97,13 +99,21 @@ export default function BrowseJobsPage() {
     }
   }, [page, selectedType, selectedLocation, selectedIndustry, searchQuery, toast]);
 
-  const toggleSaveJob = (jobId: string) => {
-    if (savedJobs.includes(jobId)) {
-      setSavedJobs(savedJobs.filter((id) => id !== jobId));
-      toast.info("Job removed from saved");
-    } else {
-      setSavedJobs([...savedJobs, jobId]);
-      toast.success("Job saved");
+  const toggleSaveJob = async (jobId: string) => {
+    try {
+      if (savedJobs.includes(jobId)) {
+        await apiClient.delete(`/api/saved-jobs?jobId=${jobId}`);
+        setSavedJobs(savedJobs.filter((id) => id !== jobId));
+        toast.info("Job removed from saved");
+      } else {
+        await apiClient.post("/api/saved-jobs", { job: jobId });
+        setSavedJobs([...savedJobs, jobId]);
+        toast.success("Job saved");
+      }
+    } catch (error) {
+      console.error("Error saving job:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to save job";
+      toast.error(errorMessage);
     }
   };
 
@@ -118,7 +128,7 @@ export default function BrowseJobsPage() {
   };
 
   const formatSalary = (salary?: { min?: number; max?: number; currency?: string; period?: string }) => {
-    if (!salary || (!salary.min && !salary.max)) return "Salary not specified";
+    if (!salary || (!salary.min && !salary.max)) return t("jobs.salaryNotSpecified");
     // const currency = salary.currency || "AUD"; // Removed unused variable
     const period = salary.period === "year" ? "year" : salary.period === "month" ? "month" : "hour";
     if (salary.min && salary.max) {
@@ -136,15 +146,15 @@ export default function BrowseJobsPage() {
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     
-    if (days === 0) return "Today";
-    if (days === 1) return "1 day ago";
-    if (days < 7) return `${days} days ago`;
-    if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
-    return `${Math.floor(days / 30)} months ago`;
+    if (days === 0) return t("jobs.today");
+    if (days === 1) return t("jobs.dayAgo");
+    if (days < 7) return `${days} ${t("jobs.daysAgo")}`;
+    if (days < 30) return `${Math.floor(days / 7)} ${t("jobs.weeksAgo")}`;
+    return `${Math.floor(days / 30)} ${t("jobs.monthsAgo")}`;
   };
 
   const filteredJobs = jobs.filter((job) => {
-    if (selectedType !== "All" && job.type !== selectedType.toLowerCase().replace("-", "")) {
+    if (selectedType !== "All" && job.type !== selectedType.toLowerCase()) {
       return false;
     }
     return true;
@@ -157,6 +167,41 @@ export default function BrowseJobsPage() {
     setSelectedIndustry("All");
     setPage(1);
   };
+
+  // Fetch saved jobs on mount
+  useEffect(() => {
+    const fetchSavedJobs = async () => {
+      try {
+        const response = await apiClient.get<{
+          savedJobs: Array<{ job: { _id: string } | string }>;
+        }>("/api/saved-jobs?limit=100");
+        if (response && 'savedJobs' in response) {
+          const savedJobIds = response.savedJobs.map((sj) => {
+            // Handle both populated and non-populated job references
+            if (typeof sj.job === 'string') {
+              return sj.job;
+            }
+            return sj.job._id;
+          });
+          setSavedJobs(savedJobIds);
+        }
+      } catch (error) {
+        console.error("Error fetching saved jobs:", error);
+        // Don't show error toast for this, just continue
+      }
+    };
+    fetchSavedJobs();
+  }, []);
+
+  // Fetch jobs on mount and when filters change
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
+  // Check if any filters are applied (excluding type filter which is applied client-side)
+  const hasApiFilters = searchQuery !== "" || selectedLocation !== "All" || selectedIndustry !== "All";
+  const hasTypeFilter = selectedType !== "All";
+  const hasAnyFilters = hasApiFilters || hasTypeFilter;
 
   return (
     <div className="space-y-6">
@@ -171,9 +216,9 @@ export default function BrowseJobsPage() {
             <Briefcase className="h-6 w-6 text-[#B260E6]" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Browse Jobs</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t("jobs.browseJobs")}</h1>
             <p className="text-muted-foreground mt-1">
-              Discover opportunities that match your skills ({loading ? "..." : filteredJobs.length} jobs)
+              {t("jobs.discoverOpportunities")} ({loading ? "..." : filteredJobs.length} {t("jobs.title").toLowerCase()})
             </p>
           </div>
         </div>
@@ -182,15 +227,15 @@ export default function BrowseJobsPage() {
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Filters Sidebar */}
         <div className="lg:col-span-1">
-          <DashboardCard title="Filters" description="Refine your search">
+          <DashboardCard title={t("jobs.filters")} description={t("jobs.refineSearch")}>
             <div className="space-y-4">
               {/* Search */}
               <div className="space-y-2">
-                <Label>Search</Label>
+                <Label>{t("common.search")}</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search jobs..."
+                    placeholder={t("jobs.search")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10"
@@ -200,7 +245,7 @@ export default function BrowseJobsPage() {
 
               {/* Job Type */}
               <div className="space-y-2">
-                <Label>Job Type</Label>
+                <Label>{t("jobs.jobType")}</Label>
                 <Select
                   value={selectedType}
                   onValueChange={(value) => {
@@ -212,18 +257,18 @@ export default function BrowseJobsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Types</SelectItem>
-                    <SelectItem value="full-time">Full-time</SelectItem>
-                    <SelectItem value="part-time">Part-time</SelectItem>
-                    <SelectItem value="contract">Contract</SelectItem>
-                    <SelectItem value="temporary">Temporary</SelectItem>
+                    <SelectItem value="All">{t("jobs.allTypes")}</SelectItem>
+                    <SelectItem value="full-time">{t("jobs.fullTime")}</SelectItem>
+                    <SelectItem value="part-time">{t("jobs.partTime")}</SelectItem>
+                    <SelectItem value="contract">{t("jobs.contract")}</SelectItem>
+                    <SelectItem value="temporary">{t("jobs.temporary")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {/* Location */}
               <div className="space-y-2">
-                <Label>Location</Label>
+                <Label>{t("jobs.location")}</Label>
                 <Select
                   value={selectedLocation}
                   onValueChange={(value) => {
@@ -235,7 +280,7 @@ export default function BrowseJobsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Locations</SelectItem>
+                    <SelectItem value="All">{t("jobs.allLocations")}</SelectItem>
                     <SelectItem value="Sydney">Sydney</SelectItem>
                     <SelectItem value="Melbourne">Melbourne</SelectItem>
                     <SelectItem value="Brisbane">Brisbane</SelectItem>
@@ -248,7 +293,7 @@ export default function BrowseJobsPage() {
 
               {/* Industry */}
               <div className="space-y-2">
-                <Label>Industry</Label>
+                <Label>{t("jobs.industry")}</Label>
                 <Select
                   value={selectedIndustry}
                   onValueChange={(value) => {
@@ -260,7 +305,7 @@ export default function BrowseJobsPage() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="All">All Industries</SelectItem>
+                    <SelectItem value="All">{t("jobs.allIndustries")}</SelectItem>
                     <SelectItem value="Technology">Technology</SelectItem>
                     <SelectItem value="Construction">Construction</SelectItem>
                     <SelectItem value="Healthcare">Healthcare</SelectItem>
@@ -273,7 +318,7 @@ export default function BrowseJobsPage() {
               {/* Reset Filters */}
               <Button variant="outline" className="w-full" onClick={resetFilters}>
                 <Filter className="mr-2 h-4 w-4" />
-                Reset Filters
+                {t("jobs.resetFilters")}
               </Button>
             </div>
           </DashboardCard>
@@ -282,17 +327,22 @@ export default function BrowseJobsPage() {
         {/* Jobs List */}
         <div className="lg:col-span-3">
           {loading ? (
-            <DashboardCard title="Loading..." description="Fetching jobs">
+            <DashboardCard title={t("jobs.loading")} description={t("jobs.fetchingJobs")}>
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="w-8 h-8 border-4 border-[#B260E6] border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-muted-foreground">Loading jobs...</p>
+                <p className="text-muted-foreground">{t("jobs.loadingJobs")}</p>
               </div>
             </DashboardCard>
           ) : filteredJobs.length === 0 ? (
-            <DashboardCard title="No Jobs Found" description="Try adjusting your filters">
+            <DashboardCard 
+              title={hasAnyFilters ? t("jobs.noJobsFound") : t("jobs.noJobsAvailable")} 
+              description={hasAnyFilters ? t("jobs.tryAdjustingFilters") : t("jobs.checkBackLater")}
+            >
               <div className="flex flex-col items-center justify-center py-12">
                 <Briefcase className="h-16 w-16 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No jobs match your criteria</p>
+                <p className="text-muted-foreground">
+                  {hasAnyFilters ? t("error.noJobsWithFilter") : t("error.noJobs")}
+                </p>
               </div>
             </DashboardCard>
           ) : (
@@ -345,11 +395,11 @@ export default function BrowseJobsPage() {
                               className="rounded-xl bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] hover:scale-[1.02] transition-transform"
                               onClick={() => toast.info("Application feature coming soon")}
                             >
-                              Quick Apply
+                              {t("jobs.quickApply")}
                             </Button>
                             <Link href={`/user/jobs/${job._id}`}>
                               <Button variant="outline" className="rounded-xl">
-                                View Details
+                                {t("jobs.viewDetails")}
                               </Button>
                             </Link>
                           </div>
@@ -386,7 +436,7 @@ export default function BrowseJobsPage() {
                 disabled={page === 1}
                 onClick={() => setPage(page - 1)}
               >
-                Previous
+                {t("jobs.previous")}
               </Button>
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                 <Button
@@ -407,7 +457,7 @@ export default function BrowseJobsPage() {
                 disabled={page === totalPages}
                 onClick={() => setPage(page + 1)}
               >
-                Next
+                {t("jobs.next")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>

@@ -1,9 +1,9 @@
 "use client";
 
-import StatWidget from "@/components/admin/StatWidget";
-import DashboardCard from "@/components/admin/DashboardCard";
-import DataTable from "@/components/admin/DataTable";
-import AnalyticsChart from "@/components/admin/AnalyticsChart";
+import StatWidget from "@/components/shared/StatWidget";
+import DashboardCard from "@/components/shared/DashboardCard";
+import DataTable from "@/components/shared/DataTable";
+import AnalyticsChart from "@/components/shared/AnalyticsChart";
 import { Users, Building2, CheckCircle2, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 import React, { useState, useEffect, useCallback } from "react";
@@ -37,19 +37,20 @@ export default function AdminDashboard() {
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      const [jobsRes, companiesRes] = await Promise.all([
+      const [jobsRes, companiesRes, usersRes] = await Promise.all([
         apiClient.get<{ jobs: Array<{ status: string; createdAt: string; company?: { name: string }; title: string }>; pagination: { total: number } }>("/api/jobs?limit=100"),
         apiClient.get<{ companies: Array<{ verified: boolean }>; pagination: { total: number } }>("/api/companies?limit=100"),
-        // Note: We don't have a users API yet, so we'll skip it for now
+        apiClient.get<{ users: Array<any>; pagination: { total: number } }>("/api/admin/users?limit=100"),
       ]);
 
       const totalJobs = jobsRes.pagination.total || 0;
+      const totalUsers = usersRes.pagination.total || 0;
       const verifiedCompanies = companiesRes.companies.filter((c) => c.verified).length;
       const pendingCompanies = companiesRes.companies.filter((c) => !c.verified).length;
 
       setStats({
         totalJobs: totalJobs,
-        totalUsers: 0, // Would need users API
+        totalUsers: totalUsers,
         totalCompanies: verifiedCompanies,
         pendingApprovals: pendingCompanies,
       });

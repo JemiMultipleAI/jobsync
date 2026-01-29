@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
     const [applications, total] = await Promise.all([
       Application.find(query)
-        .populate("applicant", "name email profileImage resume")
+        .populate("applicant", "name email profileImage resume bio location skills")
         .populate({
           path: "job",
           select: "title company location type salary industry",

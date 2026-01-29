@@ -4,7 +4,7 @@ import { X } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import DashboardCard from "@/components/admin/DashboardCard";
+import DashboardCard from "@/components/shared/DashboardCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/lib/hooks/useToast";
@@ -30,6 +30,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useLanguage } from "@/lib/contexts/LanguageContext";
 
 interface SavedJob {
   _id: string;
@@ -56,6 +57,7 @@ interface SavedJob {
 
 export default function SavedJobsPage() {
   const toast = useToast();
+  const { t } = useLanguage();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
@@ -168,9 +170,9 @@ export default function SavedJobsPage() {
               <Bookmark className="h-6 w-6 text-[#B260E6]" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Saved Jobs</h1>
+              <h1 className="text-3xl font-bold tracking-tight">{t("savedJobs.title")}</h1>
               <p className="text-muted-foreground mt-1">
-                Your saved job listings ({filteredJobs.length} jobs)
+                {t("savedJobs.description")} ({filteredJobs.length} {t("jobs.title").toLowerCase()})
               </p>
             </div>
           </div>
@@ -208,7 +210,7 @@ export default function SavedJobsPage() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
-          placeholder="Search saved jobs..."
+          placeholder={t("savedJobs.search")}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
@@ -219,21 +221,21 @@ export default function SavedJobsPage() {
       {loading ? (
         <div className="text-center py-12">
           <div className="w-8 h-8 border-4 border-[#B260E6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading saved jobs...</p>
+          <p className="text-muted-foreground">{t("savedJobs.loading")}</p>
         </div>
       ) : filteredJobs.length === 0 ? (
         <DashboardCard
-          title="No Saved Jobs"
-          description="You haven't saved any jobs yet"
+          title={t("savedJobs.noSavedJobs")}
+          description={t("savedJobs.noSavedJobsDesc")}
         >
           <div className="flex flex-col items-center justify-center py-12">
             <Bookmark className="h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">
-              Start saving jobs to see them here
+              {t("savedJobs.startSaving")}
             </p>
             <Link href="/user/jobs">
               <Button className="mt-4 bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5]">
-                Browse Jobs
+                {t("savedJobs.browseJobs")}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -284,7 +286,7 @@ export default function SavedJobsPage() {
                     </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      <span>Saved {formatDate(savedJob.savedAt)}</span>
+                      <span>{t("savedJobs.saved")} {formatDate(savedJob.savedAt)}</span>
                     </div>
                   </div>
 
@@ -295,7 +297,7 @@ export default function SavedJobsPage() {
                   <div className="mt-4 space-y-2">
                     <Link href={`/user/jobs/${savedJob.job._id}`}>
                       <Button className="w-full rounded-xl bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] hover:scale-[1.02] transition-transform">
-                        View Details
+                        {t("savedJobs.viewDetails")}
                       </Button>
                     </Link>
                   </div>
@@ -305,7 +307,7 @@ export default function SavedJobsPage() {
           ))}
         </div>
       ) : (
-        <DashboardCard title={`${filteredJobs.length} Saved Jobs`}>
+        <DashboardCard title={`${filteredJobs.length} ${t("savedJobs.savedJobsCount")}`}>
           <div className="space-y-4">
             {filteredJobs.map((savedJob, index) => (
               <motion.div
@@ -347,7 +349,7 @@ export default function SavedJobsPage() {
                           </div>
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            <span>Saved {formatDate(savedJob.savedAt)}</span>
+                            <span>{t("savedJobs.saved")} {formatDate(savedJob.savedAt)}</span>
                           </div>
                         </div>
                       </div>
@@ -365,7 +367,7 @@ export default function SavedJobsPage() {
                         </Button>
                         <Link href={`/user/jobs/${savedJob.job._id}`}>
                           <Button className="rounded-xl bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] whitespace-nowrap">
-                            View Details
+                            {t("savedJobs.viewDetails")}
                           </Button>
                         </Link>
                       </div>
@@ -382,19 +384,19 @@ export default function SavedJobsPage() {
       <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove Saved Job?</AlertDialogTitle>
+            <AlertDialogTitle>{t("savedJobs.removeTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove{" "}
-              <strong>{selectedJob?.job.title}</strong> from your saved jobs?
+              {t("savedJobs.removeDesc")}{" "}
+              <strong>{selectedJob?.job.title}</strong> {t("savedJobs.fromSaved")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemove}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remove
+              {t("savedJobs.remove")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

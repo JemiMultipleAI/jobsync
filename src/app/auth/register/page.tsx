@@ -28,7 +28,7 @@ import { useState  } from "react"
 
 const registerSchema = z
   .object({
-    role: z.enum(["user", "admin", "employer"], {
+    role: z.enum(["user", "employer"], {
       error: "Please select a role",
     }),
     name: z.string().min(1, "Name is required"),
@@ -107,13 +107,17 @@ export default function RegisterPage() {
         return;
       }
 
+      // Check for redirect parameter in URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const redirectParam = urlParams.get("redirect");
+      
       // Redirect based on role
-      if (result.user.role === "admin") {
-        router.push("/admin");
-      } else if (result.user.role === "employer") {
+      if (result.user.role === "employer") {
         router.push("/employer");
       } else {
-        router.push("/user");
+        // If there's a redirect parameter and user is a basic user, use it
+        const redirectPath = redirectParam || "/user";
+        router.push(redirectPath);
       }
     } catch (error) {
       console.error("Registration error:", error);
@@ -237,8 +241,8 @@ export default function RegisterPage() {
             </Link>
           </div>
 
-          <Card className="border-0 shadow-xl rounded-2xl overflow-hidden bg-card mx-auto">
-            <CardHeader className="text-center pb-4 px-8 pt-8">
+          <Card className="border border-gray-200 shadow-xl rounded-2xl overflow-hidden bg-white mx-auto">
+            <CardHeader className="text-center pb-2 px-8 pt-6">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -254,7 +258,7 @@ export default function RegisterPage() {
               </motion.div>
             </CardHeader>
 
-            <CardContent className="space-y-5 p-8">
+            <CardContent className="space-y-5 p-8 pb-4">
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -265,7 +269,7 @@ export default function RegisterPage() {
                   <Label className="text-sm font-medium text-gray-700">
                     Register as
                   </Label>
-                  <div className="grid grid-cols-3 gap-3 p-1 bg-gray-100 rounded-xl">
+                  <div className="grid grid-cols-2 gap-3 p-1 bg-gray-100 rounded-xl">
                     <button
                       type="button"
                       onClick={() => setValue("role", "user")}
@@ -289,18 +293,6 @@ export default function RegisterPage() {
                     >
                       <Briefcase className="h-5 w-5" />
                       <span className="font-medium">Employer</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setValue("role", "admin")}
-                      className={`flex items-center justify-center space-x-2 py-3 px-4 rounded-lg transition-all duration-200 ${
-                        selectedRole === "admin"
-                          ? "bg-white shadow-md text-[#B260E6]"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      <Shield className="h-5 w-5" />
-                      <span className="font-medium">Admin</span>
                     </button>
                   </div>
                   <input type="hidden" {...register("role")} />
@@ -602,29 +594,16 @@ export default function RegisterPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.4, delay: 0.8 }}
-                className="relative"
+                className="text-center text-sm pt-2"
               >
-                <div className="absolute inset-0 flex items-center">
-                  <Separator className="w-full" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-card px-3 text-gray-500 font-medium">
-                    Already have an account?
-                  </span>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4, delay: 0.9 }}
-                className="text-center"
-              >
+                <span className="text-gray-600">
+                  Already have an account?{" "}
+                </span>
                 <Link
                   href="/auth/login"
-                  className="inline-flex items-center text-[#B260E6] hover:text-[#A050D6] font-semibold transition-colors"
+                  className="text-[#B260E6] hover:text-[#A050D6] font-semibold transition-colors inline-flex items-center"
                 >
-                  Login
+                  Sign in
                   <ArrowRight className="ml-1 h-4 w-4" />
                 </Link>
               </motion.div>

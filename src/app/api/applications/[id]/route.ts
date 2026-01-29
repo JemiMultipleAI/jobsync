@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const updateApplicationSchema = z.object({
   status: z
-    .enum(["pending", "under-review", "shortlisted", "rejected", "accepted"])
+    .enum(["pending", "under_review", "shortlisted", "rejected", "accepted"])
     .optional(),
   notes: z.string().optional(),
 });
@@ -89,19 +89,48 @@ export async function PUT(
       );
     }
 
-    // Only admins can update application status
-    if (validatedData.status && authResult.user!.role !== "admin") {
-      return NextResponse.json(
-        { error: "Only admins can update application status" },
-        { status: 403 }
-      );
+    // Check authorization: employers can update status for their company's jobs, users can withdraw their own
+    const isApplicant = application.applicant.toString() === authResult.user!.userId;
+    const isAdmin = authResult.user!.role === "admin";
+    
+    // For employers, check if they own the job's company
+    let isEmployer = false;
+    if (authResult.user!.role === "employer") {
+      const job = await Job.findById(application.job).populate("company").lean();
+      if (job && job.company) {
+        const companyId = typeof job.company === 'object' && job.company !== null && '_id' in job.company
+          ? job.company._id.toString()
+          : job.company.toString();
+        // Check if user's company matches job's company
+        const userProfile = await import("@/lib/models/User").then(m => m.default.findById(authResult.user!.userId));
+        if (userProfile && userProfile.company) {
+          const userCompanyId = typeof userProfile.company === 'object' && userProfile.company !== null && '_id' in userProfile.company
+            ? userProfile.company._id.toString()
+            : userProfile.company.toString();
+          isEmployer = companyId === userCompanyId;
+        }
+      }
     }
 
-    // Users can only update their own applications (e.g., withdraw)
-    if (
-      application.applicant.toString() !== authResult.user!.userId &&
-      authResult.user!.role !== "admin"
-    ) {
+    // Only allow status updates if user is admin, employer (for their company's jobs), or applicant (to withdraw)
+    if (validatedData.status) {
+      if (!isAdmin && !isEmployer && !isApplicant) {
+        return NextResponse.json(
+          { error: "Unauthorized to update application status" },
+          { status: 403 }
+        );
+      }
+      // Applicants can only withdraw (set status to rejected or pending)
+      if (isApplicant && !isAdmin && validatedData.status !== "rejected" && validatedData.status !== "pending") {
+        return NextResponse.json(
+          { error: "You can only withdraw your application" },
+          { status: 403 }
+        );
+      }
+    }
+
+    // For other updates (notes), check authorization
+    if (validatedData.notes !== undefined && !isAdmin && !isEmployer && !isApplicant) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
@@ -128,7 +157,32 @@ export async function PUT(
           select: "name logo",
         },
       })
+      .populate("applicant", "name email")
       .lean();
+
+    // Send WebSocket notification to applicant if status changed
+    if (validatedData.status && updatedApplication) {
+      const { sendNotification } = await import("@/lib/websocket/server");
+      const applicantId = updatedApplication.applicant._id.toString();
+      const statusLabels: Record<string, string> = {
+        pending: "Pending",
+        under_review: "Under Review",
+        shortlisted: "Shortlisted",
+        rejected: "Rejected",
+        accepted: "Accepted",
+      };
+      
+      sendNotification(applicantId, {
+        title: "Application Status Updated",
+        message: `Your application for ${updatedApplication.job.title} has been updated to ${statusLabels[validatedData.status]}`,
+        type: validatedData.status === "accepted" ? "success" : "info",
+        data: {
+          applicationId: id,
+          jobId: updatedApplication.job._id,
+          status: validatedData.status,
+        },
+      });
+    }
 
     return NextResponse.json({
       message: "Application updated successfully",

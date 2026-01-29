@@ -15,7 +15,7 @@ function getTokenFromRequest(request: NextRequest): string | null {
 const protectedRoutes = ["/user", "/admin", "/employer"];
 
 // Routes that should redirect if already authenticated
-const authRoutes = ["/auth/login", "/auth/register", "/signin", "/signup"];
+const authRoutes = ["/auth/login", "/auth/register"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

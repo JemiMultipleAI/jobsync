@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Sidebar from "@/components/admin/Sidebar";
-import Navbar from "@/components/admin/Navbar";
+import Sidebar from "@/components/layout/Sidebar/AdminSidebar";
+import Navbar from "@/components/layout/Navbar/AdminNavbar";
 import { motion } from "framer-motion";
 
 const MOBILE_BREAKPOINT = 768; // md breakpoint in Tailwind

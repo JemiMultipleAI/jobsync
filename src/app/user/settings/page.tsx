@@ -1,10 +1,14 @@
 "use client";
 
-import { useState  } from "react"
-import DashboardCard from "@/components/admin/DashboardCard";
+import { useState, useEffect } from "react"
+import DashboardCard from "@/components/shared/DashboardCard";
 import { motion } from "framer-motion"
-import { Shield } from "lucide-react"
+import { Shield, Save } from "lucide-react"
 import { Button  } from "@/components/ui/button"  
+import { useToast } from "@/lib/hooks/useToast";
+import { useTheme } from "@/lib/contexts/ThemeContext";
+import { useLanguage } from "@/lib/contexts/LanguageContext";
+import { apiClient } from "@/lib/api/client";
 
 import { Input  } from "@/components/ui/input"
 import { Label  } from "@/components/ui/label"
@@ -26,13 +30,66 @@ import { Moon,  Sun } from "lucide-react"
 
 
 export default function SettingsPage() {
-  const [darkMode, setDarkMode] = useState(false);
+  const toast = useToast();
+  const { theme, setTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [smsNotifications, setSmsNotifications] = useState(false);
   const [profileVisibility, setProfileVisibility] = useState("public");
   const [jobAlerts, setJobAlerts] = useState(true);
-  const [language, setLanguage] = useState("en");
+  const [saving, setSaving] = useState(false);
+  // Local state for language selection - only applies on save
+  const [selectedLanguage, setSelectedLanguage] = useState<"en" | "es" | "fr" | "de" | "zh">("en");
+
+  useEffect(() => {
+    // Load saved preferences
+    const loadPreferences = async () => {
+      try {
+        const response = await apiClient.get<{ user?: any; preferences?: any }>("/api/auth/profile");
+        const prefs = response.preferences || response.user?.preferences || {};
+        if (prefs) {
+          setEmailNotifications(prefs.emailNotifications ?? true);
+          setPushNotifications(prefs.pushNotifications ?? true);
+          setSmsNotifications(prefs.smsNotifications ?? false);
+          setProfileVisibility(prefs.profileVisibility ?? "public");
+          setJobAlerts(prefs.jobAlerts ?? true);
+          // Set local language state from saved preference
+          if (prefs.language && ["en", "es", "fr", "de", "zh"].includes(prefs.language)) {
+            setSelectedLanguage(prefs.language);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading preferences:", error);
+      }
+    };
+    loadPreferences();
+  }, []);
+
+  const handleSavePreferences = async () => {
+    try {
+      setSaving(true);
+      await apiClient.put("/api/auth/profile", {
+        preferences: {
+          emailNotifications,
+          pushNotifications,
+          smsNotifications,
+          profileVisibility,
+          jobAlerts,
+          darkMode: theme === "dark",
+          language: selectedLanguage,
+        },
+      });
+      // Only update the language context after successful save
+      setLanguage(selectedLanguage);
+      toast.success(t("settings.saveSuccess"));
+    } catch (error) {
+      console.error("Error saving preferences:", error);
+      toast.error(t("settings.saveError"));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -47,9 +104,9 @@ export default function SettingsPage() {
             <Shield className="h-6 w-6 text-[#B260E6]" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t("settings.title")}</h1>
             <p className="text-muted-foreground mt-1">
-              Manage your account settings and preferences.
+              {t("settings.manageSettings")}
             </p>
           </div>
         </div>
@@ -57,15 +114,15 @@ export default function SettingsPage() {
 
       {/* Notification Preferences */}
       <DashboardCard
-        title="Notification Preferences"
-        description="Configure how you receive notifications"
+        title={t("settings.notificationPreferences")}
+        description={t("settings.notificationDescription")}
       >
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="email-notifications">Email Notifications</Label>
+              <Label htmlFor="email-notifications">{t("settings.emailNotifications")}</Label>
               <p className="text-sm text-muted-foreground">
-                Receive notifications via email
+                {t("settings.emailNotificationsDesc")}
               </p>
             </div>
             <Switch
@@ -77,9 +134,9 @@ export default function SettingsPage() {
           <Separator />
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="push-notifications">Push Notifications</Label>
+              <Label htmlFor="push-notifications">{t("settings.pushNotifications")}</Label>
               <p className="text-sm text-muted-foreground">
-                Receive push notifications in browser
+                {t("settings.pushNotificationsDesc")}
               </p>
             </div>
             <Switch
@@ -91,9 +148,9 @@ export default function SettingsPage() {
           <Separator />
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="sms-notifications">SMS Notifications</Label>
+              <Label htmlFor="sms-notifications">{t("settings.smsNotifications")}</Label>
               <p className="text-sm text-muted-foreground">
-                Receive notifications via SMS
+                {t("settings.smsNotificationsDesc")}
               </p>
             </div>
             <Switch
@@ -105,9 +162,9 @@ export default function SettingsPage() {
           <Separator />
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="job-alerts">Job Alerts</Label>
+              <Label htmlFor="job-alerts">{t("settings.jobAlerts")}</Label>
               <p className="text-sm text-muted-foreground">
-                Receive alerts for new job matches
+                {t("settings.jobAlertsDesc")}
               </p>
             </div>
             <Switch
@@ -121,24 +178,24 @@ export default function SettingsPage() {
 
       {/* Privacy Settings */}
       <DashboardCard
-        title="Privacy Settings"
-        description="Manage your privacy and visibility preferences"
+        title={t("settings.privacySettings")}
+        description={t("settings.privacyDescription")}
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="profile-visibility">Profile Visibility</Label>
+            <Label htmlFor="profile-visibility">{t("settings.profileVisibility")}</Label>
             <Select value={profileVisibility} onValueChange={setProfileVisibility}>
               <SelectTrigger id="profile-visibility">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="public">Public - Visible to all</SelectItem>
-                <SelectItem value="registered">Registered Users Only</SelectItem>
-                <SelectItem value="private">Private - Only visible to me</SelectItem>
+                <SelectItem value="public">{t("settings.visibilityPublic")}</SelectItem>
+                <SelectItem value="registered">{t("settings.visibilityRegistered")}</SelectItem>
+                <SelectItem value="private">{t("settings.visibilityPrivate")}</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Control who can view your profile
+              {t("settings.profileVisibilityDesc")}
             </p>
           </div>
         </div>
@@ -146,81 +203,88 @@ export default function SettingsPage() {
 
       {/* Password Change */}
       <DashboardCard
-        title="Password Change"
-        description="Update your account password"
+        title={t("settings.passwordChange")}
+        description={t("settings.passwordDescription")}
       >
         <div className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="current-password">Current Password</Label>
+            <Label htmlFor="current-password">{t("settings.currentPassword")}</Label>
             <Input
               id="current-password"
               type="password"
-              placeholder="Enter current password"
+              placeholder={t("settings.enterCurrentPassword")}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="new-password">New Password</Label>
+            <Label htmlFor="new-password">{t("settings.newPassword")}</Label>
             <Input
               id="new-password"
               type="password"
-              placeholder="Enter new password"
+              placeholder={t("settings.enterNewPassword")}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirm Password</Label>
+            <Label htmlFor="confirm-password">{t("settings.confirmPassword")}</Label>
             <Input
               id="confirm-password"
               type="password"
-              placeholder="Confirm new password"
+              placeholder={t("settings.confirmNewPassword")}
             />
           </div>
           <div className="flex justify-end">
-            <Button variant="outline">Update Password</Button>
+            <Button variant="outline">{t("settings.updatePassword")}</Button>
           </div>
         </div>
       </DashboardCard>
 
       {/* Account Preferences */}
       <DashboardCard
-        title="Account Preferences"
-        description="Customize your account experience"
+        title={t("settings.accountPreferences")}
+        description={t("settings.languageDescription")}
       >
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="dark-mode">Dark Mode</Label>
+              <Label htmlFor="dark-mode">{t("settings.darkMode")}</Label>
               <p className="text-sm text-muted-foreground">
-                Switch between light and dark theme
+                {t("settings.darkModeDescription")}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Sun className="h-4 w-4 text-muted-foreground" />
               <Switch
                 id="dark-mode"
-                checked={darkMode}
-                onCheckedChange={setDarkMode}
+                checked={theme === "dark"}
+                onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
               />
               <Moon className="h-4 w-4 text-muted-foreground" />
             </div>
           </div>
           <Separator />
           <div className="space-y-2">
-            <Label htmlFor="language">Language</Label>
-            <Select value={language} onValueChange={setLanguage}>
+            <Label htmlFor="language">{t("settings.language")}</Label>
+            <Select value={selectedLanguage} onValueChange={(value) => setSelectedLanguage(value as "en" | "es" | "fr" | "de" | "zh")}>
               <SelectTrigger id="language">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="en">English</SelectItem>
-                <SelectItem value="es">Spanish</SelectItem>
-                <SelectItem value="fr">French</SelectItem>
-                <SelectItem value="de">German</SelectItem>
-                <SelectItem value="zh">Chinese</SelectItem>
+                <SelectItem value="es">Español</SelectItem>
+                <SelectItem value="fr">Français</SelectItem>
+                <SelectItem value="de">Deutsch</SelectItem>
+                <SelectItem value="zh">中文</SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground">
-              Select your preferred language
+              {t("settings.languageDescription")}
             </p>
+          </div>
+          <Separator />
+          <div className="flex justify-end pt-4">
+            <Button onClick={handleSavePreferences} disabled={saving}>
+              <Save className="mr-2 h-4 w-4" />
+              {saving ? t("common.loading") : t("common.save")}
+            </Button>
           </div>
         </div>
       </DashboardCard>
@@ -228,20 +292,20 @@ export default function SettingsPage() {
       {/* Danger Zone */}
       <Card className="border-destructive">
         <CardHeader>
-          <CardTitle className="text-destructive">Danger Zone</CardTitle>
+          <CardTitle className="text-destructive">{t("settings.dangerZone")}</CardTitle>
           <CardDescription>
-            Irreversible actions that affect your account
+            {t("settings.dangerDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium">Delete Account</p>
+              <p className="font-medium">{t("settings.deleteAccount")}</p>
               <p className="text-sm text-muted-foreground">
-                Permanently delete your account and all associated data
+                {t("settings.deleteAccountDesc")}
               </p>
             </div>
-            <Button variant="destructive">Delete Account</Button>
+            <Button variant="destructive">{t("settings.deleteAccount")}</Button>
           </div>
         </CardContent>
       </Card>
