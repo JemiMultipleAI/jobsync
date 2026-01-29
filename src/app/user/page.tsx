@@ -224,24 +224,24 @@ export default function UserDashboard() {
       )}
 
       {/* Charts and Recent Activity Row */}
-      <div className="grid gap-4 md:grid-cols-2 items-stretch">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Applications Status Distribution */}
-        {loading ? (
-          <div className="h-[400px] bg-gray-100 rounded-lg animate-pulse" />
-        ) : applicationsStatusData.length === 0 ? (
-          <DashboardCard
-            title="Applications Status Distribution"
-            description="Breakdown of your application statuses"
-            className="h-[400px] flex flex-col"
-          >
-            <div className="flex flex-col items-center justify-center py-8 text-center flex-1">
-              <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
-              <p className="text-muted-foreground">No applications yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Apply to jobs to see your status distribution</p>
-            </div>
-          </DashboardCard>
-        ) : (
-          <div className="h-[400px]">
+        <div className="h-[420px]">
+          {loading ? (
+            <div className="h-full bg-gray-100 rounded-lg animate-pulse" />
+          ) : applicationsStatusData.length === 0 ? (
+            <DashboardCard
+              title="Applications Status Distribution"
+              description="Breakdown of your application statuses"
+              className="h-full"
+            >
+              <div className="flex flex-col items-center justify-center py-8 text-center h-full">
+                <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                <p className="text-muted-foreground">No applications yet</p>
+                <p className="text-sm text-muted-foreground mt-1">Apply to jobs to see your status distribution</p>
+              </div>
+            </DashboardCard>
+          ) : (
             <AnalyticsChart
               title="Applications Status Distribution"
               description="Breakdown of your application statuses"
@@ -250,17 +250,18 @@ export default function UserDashboard() {
               dataKey="value"
               nameKey="name"
             />
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Recent Activity */}
-        {loading ? (
-          <div className="h-[400px] bg-gray-100 rounded-lg animate-pulse" />
-        ) : (
-          <DashboardCard
-            title="Recent Activity"
-            description="Your latest job application updates"
-            className="h-[400px] flex flex-col"
+        <div className="h-[420px]">
+          {loading ? (
+            <div className="h-full bg-gray-100 rounded-lg animate-pulse" />
+          ) : (
+            <DashboardCard
+              title="Recent Activity"
+              description="Your latest job application updates"
+              className="h-full"
             action={
               <Link href="/user/applications">
                 <Button variant="ghost" size="sm">
@@ -327,7 +328,8 @@ export default function UserDashboard() {
               </div>
             )}
           </DashboardCard>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

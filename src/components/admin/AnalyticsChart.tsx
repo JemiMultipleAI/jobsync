@@ -56,10 +56,11 @@ export default function AnalyticsChart({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      className="h-full"
     >
       <Card
         className={cn(
-          "bg-card/90 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300 rounded-xl border-border/50",
+          "bg-card/90 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300 rounded-xl border-border/50 h-full flex flex-col",
           className
         )}
       >
@@ -71,8 +72,8 @@ export default function AnalyticsChart({
             <CardDescription className="mt-1.5">{description}</CardDescription>
           )}
         </CardHeader>
-        <CardContent className="px-6 pb-6">
-          <ResponsiveContainer width="100%" height={300}>
+        <CardContent className="px-6 pb-6 flex-1 flex flex-col">
+          <ResponsiveContainer width="100%" height="100%">
             {type === "line" ? (
               <LineChart data={data}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -109,43 +110,55 @@ export default function AnalyticsChart({
                 <Legend />
                 <Bar dataKey={dataKey} fill="#B260E6" radius={[4, 4, 0, 0]} />
               </BarChart>
-            ) : (
-              <PieChart>
-                <Pie
-                  data={data}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={(props) => {
-                    const { name, percent } = props as {
-                      name?: string;
-                      percent?: number;
-                    };
-                    return `${name ?? ""} ${(percent
-                      ? percent * 100
-                      : 0
-                    ).toFixed(0)}%`;
-                  }}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey={dataKey}
-                >
-                  {data.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={colors[index % colors.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--card))",
-                    border: "1px solid hsl(var(--border))",
-                    borderRadius: "0.5rem",
-                  }}
-                />
-              </PieChart>
-            )}
+            ) : (() => {
+              // Calculate total for percentage
+              const total = data.reduce((sum, item) => sum + (Number(item[dataKey]) || 0), 0);
+              
+              return (
+                <PieChart>
+                  <Pie
+                    data={data}
+                    cx="30%"
+                    cy="50%"
+                    outerRadius={80}
+                    innerRadius={45}
+                    fill="#8884d8"
+                    dataKey={dataKey}
+                    paddingAngle={3}
+                  >
+                    {data.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={colors[index % colors.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "0.5rem",
+                    }}
+                    formatter={(value: number) => {
+                      const percent = total > 0 ? ((value / total) * 100).toFixed(0) : '0';
+                      return [`${value} (${percent}%)`, ''];
+                    }}
+                  />
+                  <Legend 
+                    layout="vertical"
+                    align="right"
+                    verticalAlign="middle"
+                    wrapperStyle={{ paddingLeft: "20px" }}
+                    formatter={(value, entry) => {
+                      const { payload } = entry as { payload?: Record<string, unknown> };
+                      const itemValue = Number(payload?.[dataKey]) || 0;
+                      const percent = total > 0 ? ((itemValue / total) * 100).toFixed(0) : '0';
+                      return <span className="text-sm text-foreground">{value} ({percent}%)</span>;
+                    }}
+                  />
+                </PieChart>
+              );
+            })()}
           </ResponsiveContainer>
         </CardContent>
       </Card>
