@@ -143,6 +143,10 @@ export default function BrowseJobsPage() {
     return `${Math.floor(days / 30)} months ago`;
   };
 
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
+
   const filteredJobs = jobs.filter((job) => {
     if (selectedType !== "All" && job.type !== selectedType.toLowerCase().replace("-", "")) {
       return false;

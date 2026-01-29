@@ -96,6 +96,10 @@ export default function CompaniesPage() {
     }
   };
 
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
+
   const resetFilters = () => {
     setSearchQuery("");
     setSelectedIndustry("All");

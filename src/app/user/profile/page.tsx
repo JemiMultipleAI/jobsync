@@ -107,6 +107,41 @@ export default function ProfilePage() {
     setSkills(skills.filter((s) => s !== skill));
   };
 
+  // Calculate profile completion based on local state for real-time updates
+  const calculateLocalProfileCompletion = () => {
+    let completion = 0;
+
+    // 1. Profile Picture (20%)
+    if (user?.profileImage && user.profileImage.trim().length > 0) {
+      completion += 20;
+    }
+
+    // 2. Personal Information - name, phone, and location (20%)
+    const hasName = formData.name && formData.name.trim().length > 0;
+    const hasPhone = formData.phone && formData.phone.trim().length > 0;
+    const hasLocation = formData.location && formData.location.trim().length > 0;
+    if (hasName && hasPhone && hasLocation) {
+      completion += 20;
+    }
+
+    // 3. Professional Summary - bio (20%)
+    if (formData.bio && formData.bio.trim().length > 0) {
+      completion += 20;
+    }
+
+    // 4. Skills (20%)
+    if (skills.length > 0) {
+      completion += 20;
+    }
+
+    // 5. Resume/CV (20%)
+    if (user?.resume && user.resume.trim().length > 0) {
+      completion += 20;
+    }
+
+    return Math.min(100, Math.max(0, completion));
+  };
+
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
@@ -270,12 +305,9 @@ export default function ProfilePage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progress</span>
-            <span className="font-semibold">{user.profileCompletion || 0}%</span>
+            <span className="font-semibold">{calculateLocalProfileCompletion()}%</span>
           </div>
-          <Progress value={user.profileCompletion || 0} className="h-2" />
-          <p className="text-xs text-muted-foreground mt-2">
-            Add your resume, complete your bio, and add skills to improve your profile.
-          </p>
+          <Progress value={calculateLocalProfileCompletion()} className="h-2" />
         </div>
       </DashboardCard>
 

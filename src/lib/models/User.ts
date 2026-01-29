@@ -116,23 +116,37 @@ UserSchema.methods.comparePassword = async function (
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Calculate profile completion
+// Calculate profile completion - 5 sections, each worth 20%
 UserSchema.methods.calculateProfileCompletion = function (): number {
-  // Explicitly check each field to ensure proper detection
-  const fieldChecks = [
-    !!this.name && this.name.trim().length > 0, // Name is required and should be non-empty
-    !!this.email && this.email.trim().length > 0, // Email is required and should be non-empty
-    !!this.bio && this.bio.trim().length > 0, // Bio is optional
-    !!this.phone && this.phone.trim().length > 0, // Phone is optional
-    !!this.location && this.location.trim().length > 0, // Location is optional
-    Array.isArray(this.skills) && this.skills.length > 0, // Skills array should exist and have items
-    !!this.profileImage && this.profileImage.trim().length > 0, // Profile image is optional
-    !!this.resume && this.resume.trim().length > 0, // Resume is optional
-  ];
+  let completion = 0;
 
-  const completedFields = fieldChecks.filter(Boolean).length;
-  const totalFields = fieldChecks.length;
-  const completion = Math.round((completedFields / totalFields) * 100);
+  // 1. Profile Picture (20%)
+  if (!!this.profileImage && this.profileImage.trim().length > 0) {
+    completion += 20;
+  }
+
+  // 2. Personal Information - name, phone, and location (20%)
+  const hasName = !!this.name && this.name.trim().length > 0;
+  const hasPhone = !!this.phone && this.phone.trim().length > 0;
+  const hasLocation = !!this.location && this.location.trim().length > 0;
+  if (hasName && hasPhone && hasLocation) {
+    completion += 20;
+  }
+
+  // 3. Professional Summary - bio (20%)
+  if (!!this.bio && this.bio.trim().length > 0) {
+    completion += 20;
+  }
+
+  // 4. Skills (20%)
+  if (Array.isArray(this.skills) && this.skills.length > 0) {
+    completion += 20;
+  }
+
+  // 5. Resume/CV (20%)
+  if (!!this.resume && this.resume.trim().length > 0) {
+    completion += 20;
+  }
 
   // Ensure completion is between 0 and 100
   return Math.min(100, Math.max(0, completion));

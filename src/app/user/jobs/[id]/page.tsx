@@ -63,6 +63,7 @@ export default function JobDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isSaved, setIsSaved] = useState(false);
   const [applying, setApplying] = useState(false);
+  const [hasApplied, setHasApplied] = useState(false);
 
   const fetchJob = useCallback(async () => {
     try {
@@ -89,12 +90,25 @@ export default function JobDetailPage() {
     }
   }, [params.id]);
 
+  const checkIfApplied = useCallback(async () => {
+    try {
+      const response = await apiClient.get<{ applications: Array<{ job: { _id: string } | string }> }>("/api/applications");
+      const appliedJobIds = response.applications.map((app) => 
+        typeof app.job === 'string' ? app.job : app.job._id
+      );
+      setHasApplied(appliedJobIds.includes(params.id as string));
+    } catch (_error) {
+      // Silently fail - user might not be logged in
+    }
+  }, [params.id]);
+
   useEffect(() => {
     if (params.id) {
       fetchJob();
       checkIfSaved();
+      checkIfApplied();
     }
-  }, [params.id, fetchJob, checkIfSaved]);
+  }, [params.id, fetchJob, checkIfSaved, checkIfApplied]);
 
   const handleSaveJob = async () => {
     try {
@@ -118,12 +132,14 @@ export default function JobDetailPage() {
     try {
       setApplying(true);
       await apiClient.post("/api/applications", { job: params.id });
+      setHasApplied(true);
       toast.success("Application submitted successfully!");
       router.push("/user/applications");
     } catch (error) {
       console.error("Error applying:", error);
       const errorMessage = error instanceof Error ? error.message : "";
       if (errorMessage.includes("already applied")) {
+        setHasApplied(true);
         toast.error("You have already applied to this job");
       } else {
         const message = error instanceof Error ? error.message : "Failed to submit application";
@@ -231,22 +247,42 @@ export default function JobDetailPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleSaveJob}
-                  className={isSaved ? "text-[#ED84A5]" : ""}
-                >
-                  <Bookmark className={`mr-2 h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
-                  {isSaved ? "Saved" : "Save"}
-                </Button>
-                <Button
-                  onClick={handleApply}
-                  disabled={applying || job.status !== "active"}
-                  className="bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5]"
-                >
-                  {applying ? "Applying..." : "Apply Now"}
-                </Button>
+              <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleSaveJob}
+                    className={isSaved ? "text-[#ED84A5]" : ""}
+                  >
+                    <Bookmark className={`mr-2 h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
+                    {isSaved ? "Saved" : "Save"}
+                  </Button>
+                  <Button
+                    onClick={handleApply}
+                    disabled={applying || job.status !== "active" || hasApplied}
+                    className={hasApplied 
+                      ? "bg-green-600 hover:bg-green-600 cursor-default" 
+                      : "bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5]"
+                    }
+                  >
+                    {hasApplied ? (
+                      <>
+                        <CheckCircle className="mr-2 h-4 w-4" />
+                        Applied
+                      </>
+                    ) : applying ? "Applying..." : "Apply Now"}
+                  </Button>
+                </div>
+                {!hasApplied && job.status === "active" && (
+                  <Button
+                    onClick={handleApply}
+                    disabled={applying}
+                    size="sm"
+                    className="text-xs bg-[#ED84A5] hover:bg-[#DD74A5] text-white"
+                  >
+                    Quick Apply
+                  </Button>
+                )}
               </div>
             </div>
 
@@ -359,26 +395,6 @@ export default function JobDetailPage() {
             </div>
           </DashboardCard>
 
-          {/* Quick Actions */}
-          <DashboardCard title="Quick Actions" description="Manage this job">
-            <div className="space-y-2">
-              <Button
-                onClick={handleApply}
-                disabled={applying || job.status !== "active"}
-                className="w-full bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5]"
-              >
-                {applying ? "Applying..." : "Apply Now"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleSaveJob}
-                className={`w-full ${isSaved ? "text-[#ED84A5]" : ""}`}
-              >
-                <Bookmark className={`mr-2 h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
-                {isSaved ? "Remove from Saved" : "Save Job"}
-              </Button>
-            </div>
-          </DashboardCard>
         </div>
       </div>
     </div>
