@@ -1,6 +1,12 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
 
+export interface ICertificate {
+  name: string;
+  url: string;
+  uploadedAt: Date;
+}
+
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -13,6 +19,7 @@ export interface IUser extends Document {
   skills: string[];
   profileImage?: string;
   resume?: string;
+  certificates: ICertificate[];
   profileCompletion: number;
   createdAt: Date;
   updatedAt: Date;
@@ -72,6 +79,14 @@ const UserSchema = new Schema<IUser>(
     resume: {
       type: String,
     },
+    certificates: {
+      type: [{
+        name: { type: String, required: true },
+        url: { type: String, required: true },
+        uploadedAt: { type: Date, default: Date.now },
+      }],
+      default: [],
+    },
     profileCompletion: {
       type: Number,
       default: 0,
@@ -116,36 +131,41 @@ UserSchema.methods.comparePassword = async function (
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Calculate profile completion - 5 sections, each worth 20%
+// Calculate profile completion - 6 sections
 UserSchema.methods.calculateProfileCompletion = function (): number {
   let completion = 0;
 
-  // 1. Profile Picture (20%)
+  // 1. Profile Picture (17%)
   if (!!this.profileImage && this.profileImage.trim().length > 0) {
-    completion += 20;
+    completion += 17;
   }
 
-  // 2. Personal Information - name, phone, and location (20%)
+  // 2. Personal Information - name, phone, and location (17%)
   const hasName = !!this.name && this.name.trim().length > 0;
   const hasPhone = !!this.phone && this.phone.trim().length > 0;
   const hasLocation = !!this.location && this.location.trim().length > 0;
   if (hasName && hasPhone && hasLocation) {
-    completion += 20;
+    completion += 17;
   }
 
-  // 3. Professional Summary - bio (20%)
+  // 3. Professional Summary - bio (16%)
   if (!!this.bio && this.bio.trim().length > 0) {
-    completion += 20;
+    completion += 16;
   }
 
-  // 4. Skills (20%)
+  // 4. Skills (17%)
   if (Array.isArray(this.skills) && this.skills.length > 0) {
-    completion += 20;
+    completion += 17;
   }
 
-  // 5. Resume/CV (20%)
+  // 5. Resume/CV (17%)
   if (!!this.resume && this.resume.trim().length > 0) {
-    completion += 20;
+    completion += 17;
+  }
+
+  // 6. Certificates/Licences (16%)
+  if (Array.isArray(this.certificates) && this.certificates.length > 0) {
+    completion += 16;
   }
 
   // Ensure completion is between 0 and 100
