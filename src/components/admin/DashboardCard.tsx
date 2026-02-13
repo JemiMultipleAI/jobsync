@@ -32,10 +32,11 @@ export default function DashboardCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       style={{ pointerEvents: 'auto' }}
+      className={cn("h-full", className?.includes("h-[") ? className.match(/h-\[\d+px\]/)?.[0] : "")}
     >
       <Card
         className={cn(
-          "bg-card/90 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300 rounded-xl border-border/50",
+          "bg-card/90 backdrop-blur-sm shadow-md hover:shadow-lg transition-all duration-300 rounded-xl border-border/50 h-full",
           className
         )}
       >
@@ -52,7 +53,7 @@ export default function DashboardCard({
           </div>
           {action && <div>{action}</div>}
         </CardHeader>
-        <CardContent className="px-6 pb-6" style={{ pointerEvents: 'auto' }}>{children}</CardContent>
+        <CardContent className="px-6 pb-6 flex-1" style={{ pointerEvents: 'auto' }}>{children}</CardContent>
       </Card>
     </motion.div>
   );

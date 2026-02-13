@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Card, CardContent } from "@/components/ui/card";
 import React from "react";
@@ -64,7 +64,7 @@ export default function BrowseJobsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const _fetchJobs = useCallback(async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -142,6 +142,10 @@ export default function BrowseJobsPage() {
     if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
     return `${Math.floor(days / 30)} months ago`;
   };
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
 
   const filteredJobs = jobs.filter((job) => {
     if (selectedType !== "All" && job.type !== selectedType.toLowerCase().replace("-", "")) {

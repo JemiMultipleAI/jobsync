@@ -33,6 +33,10 @@ import {
   Phone,
   Mail,
   Download,
+  Award,
+  Trash2,
+  FileText,
+  Plus,
 } from "lucide-react"
 import { useToast } from "@/lib/hooks/useToast";
 import { apiClient } from "@/lib/api/client";
@@ -43,6 +47,11 @@ export default function ProfilePage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  interface Certificate {
+    name: string;
+    url: string;
+    uploadedAt: string;
+  }
   interface UserProfile {
     _id: string;
     name: string;
@@ -53,6 +62,7 @@ export default function ProfilePage() {
     skills: string[];
     profileImage?: string;
     resume?: string;
+    certificates?: Certificate[];
     profileCompletion: number;
   }
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -60,6 +70,8 @@ export default function ProfilePage() {
   const [newSkill, setNewSkill] = useState("");
   const [_mounted, setMounted] = useState(false);
   const [isResumeDialogOpen, setIsResumeDialogOpen] = useState(false);
+  const [certificateName, setCertificateName] = useState("");
+  const [uploadingCertificate, setUploadingCertificate] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     bio: "",
@@ -69,15 +81,34 @@ export default function ProfilePage() {
 
   const fetchProfile = useCallback(async () => {
     try {
-      const data = await apiClient.get<{ user: UserProfile }>("/api/auth/profile");
-      setUser(data.user);
+      // Fetch both profile and certificates in parallel
+      const [profileData, certificatesData] = await Promise.all([
+        apiClient.get<{ user: UserProfile }>("/api/auth/profile"),
+        apiClient.get<{ certificates: Certificate[]; profileCompletion: number }>("/api/auth/upload/certificate"),
+      ]);
+      
+      // Debug logging
+      console.log("[DEBUG] Profile data:", profileData);
+      console.log("[DEBUG] Certificates data:", certificatesData);
+      console.log("[DEBUG] Certificates array:", certificatesData.certificates);
+      
+      // Merge certificates into user data
+      const userWithCertificates = {
+        ...profileData.user,
+        certificates: certificatesData.certificates || [],
+        profileCompletion: certificatesData.profileCompletion ?? profileData.user.profileCompletion,
+      };
+      
+      console.log("[DEBUG] Merged user with certificates:", userWithCertificates);
+      
+      setUser(userWithCertificates);
       setFormData({
-        name: data.user.name || "",
-        bio: data.user.bio || "",
-        phone: data.user.phone || "",
-        location: data.user.location || "",
+        name: profileData.user.name || "",
+        bio: profileData.user.bio || "",
+        phone: profileData.user.phone || "",
+        location: profileData.user.location || "",
       });
-      setSkills(data.user.skills || []);
+      setSkills(profileData.user.skills || []);
     } catch (error) {
       console.error("Error fetching profile:", error);
       const errorMessage = error instanceof Error ? error.message : "";
@@ -105,6 +136,46 @@ export default function ProfilePage() {
 
   const removeSkill = (skill: string) => {
     setSkills(skills.filter((s) => s !== skill));
+  };
+
+  // Calculate profile completion based on local state for real-time updates
+  const calculateLocalProfileCompletion = () => {
+    let completion = 0;
+
+    // 1. Profile Picture (17%)
+    if (user?.profileImage && user.profileImage.trim().length > 0) {
+      completion += 17;
+    }
+
+    // 2. Personal Information - name, phone, and location (17%)
+    const hasName = formData.name && formData.name.trim().length > 0;
+    const hasPhone = formData.phone && formData.phone.trim().length > 0;
+    const hasLocation = formData.location && formData.location.trim().length > 0;
+    if (hasName && hasPhone && hasLocation) {
+      completion += 17;
+    }
+
+    // 3. Professional Summary - bio (16%)
+    if (formData.bio && formData.bio.trim().length > 0) {
+      completion += 16;
+    }
+
+    // 4. Skills (17%)
+    if (skills.length > 0) {
+      completion += 17;
+    }
+
+    // 5. Resume/CV (17%)
+    if (user?.resume && user.resume.trim().length > 0) {
+      completion += 17;
+    }
+
+    // 6. Certificates/Licences (16%)
+    if (user?.certificates && user.certificates.length > 0) {
+      completion += 16;
+    }
+
+    return Math.min(100, Math.max(0, completion));
   };
 
   const handleSaveProfile = async () => {
@@ -225,6 +296,79 @@ export default function ProfilePage() {
     }
   };
 
+  const handleCertificateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!certificateName.trim()) {
+      toast.error("Please enter a certificate name first");
+      return;
+    }
+
+    // Validate file type
+    const allowedTypes = [
+      "application/pdf",
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Please select a PDF, DOC, DOCX, JPG, or PNG file");
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be less than 10MB");
+      return;
+    }
+
+    setUploadingCertificate(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("name", certificateName.trim());
+
+    try {
+      await apiClient.upload<{ 
+        certificates: Certificate[]; 
+        profileCompletion: number 
+      }>("/api/auth/upload/certificate", formData);
+
+      // Refetch profile to get the latest data
+      await fetchProfile();
+      setCertificateName("");
+      toast.success("Certificate uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading certificate:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to upload certificate";
+      toast.error(errorMessage);
+    } finally {
+      setUploadingCertificate(false);
+      // Reset the file input
+      const input = document.getElementById("certificate-upload") as HTMLInputElement;
+      if (input) input.value = "";
+    }
+  };
+
+  const handleDeleteCertificate = async (certificateUrl: string) => {
+    try {
+      await apiClient.delete<{ 
+        certificates: Certificate[]; 
+        profileCompletion: number 
+      }>(`/api/auth/upload/certificate?url=${encodeURIComponent(certificateUrl)}`);
+
+      // Refetch profile to get the latest data
+      await fetchProfile();
+      toast.success("Certificate deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting certificate:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete certificate";
+      toast.error(errorMessage);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -270,12 +414,9 @@ export default function ProfilePage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Progress</span>
-            <span className="font-semibold">{user.profileCompletion || 0}%</span>
+            <span className="font-semibold">{calculateLocalProfileCompletion()}%</span>
           </div>
-          <Progress value={user.profileCompletion || 0} className="h-2" />
-          <p className="text-xs text-muted-foreground mt-2">
-            Add your resume, complete your bio, and add skills to improve your profile.
-          </p>
+          <Progress value={calculateLocalProfileCompletion()} className="h-2" />
         </div>
       </DashboardCard>
 
@@ -531,6 +672,106 @@ export default function ProfilePage() {
             className="hidden"
             onChange={handleResumeUpload}
           />
+        </div>
+      </DashboardCard>
+
+      {/* Certificates/Licences */}
+      <DashboardCard title="Certificates & Licences" description="Upload your certificates, licences, and qualifications">
+        <div className="space-y-4">
+          {/* Upload new certificate */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <Input
+                placeholder="Certificate name (e.g., First Aid Certificate, RSA Licence)"
+                value={certificateName}
+                onChange={(e) => setCertificateName(e.target.value)}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => document.getElementById("certificate-upload")?.click()}
+              disabled={!certificateName.trim() || uploadingCertificate}
+              className="cursor-pointer"
+            >
+              {uploadingCertificate ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Certificate
+                </>
+              )}
+            </Button>
+            <input
+              id="certificate-upload"
+              type="file"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
+              className="hidden"
+              onChange={handleCertificateUpload}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Supported formats: PDF, DOC, DOCX, JPG, PNG. Max size: 10MB.
+          </p>
+
+          {/* List of certificates */}
+          {user.certificates && user.certificates.length > 0 ? (
+            <div className="space-y-3">
+              {user.certificates.map((cert, index) => (
+                <Card key={index} className="border">
+                  <CardContent className="flex items-center justify-between p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-[#B260E6]/10 to-[#ED84A5]/10">
+                        <Award className="h-5 w-5 text-[#B260E6]" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{cert.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Uploaded {new Date(cert.uploadedAt).toLocaleDateString("en-AU")}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => window.open(cert.url, "_blank")}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteCertificate(cert.url)}
+                        className="text-muted-foreground hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card className="border-dashed border-2">
+              <CardContent className="flex flex-col items-center justify-center p-8">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
+                  <Award className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-medium mb-1">No certificates uploaded</p>
+                <p className="text-xs text-muted-foreground text-center">
+                  Add certificates, licences, or qualifications to boost your profile
+                </p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </DashboardCard>
 

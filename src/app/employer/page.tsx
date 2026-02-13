@@ -291,38 +291,6 @@ export default function EmployerDashboard() {
         )}
       </div>
 
-      {/* Quick Actions */}
-      <DashboardCard
-        title="Quick Actions"
-        description="Common tasks"
-      >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Link href="/employer/jobs">
-            <Button variant="outline" className="w-full h-auto flex-col py-4 gap-2">
-              <Briefcase className="h-5 w-5" />
-              <span className="text-sm">Post Job</span>
-            </Button>
-          </Link>
-          <Link href="/employer/applications">
-            <Button variant="outline" className="w-full h-auto flex-col py-4 gap-2">
-              <FileText className="h-5 w-5" />
-              <span className="text-sm">View Applications</span>
-            </Button>
-          </Link>
-          <Link href="/employer/candidates">
-            <Button variant="outline" className="w-full h-auto flex-col py-4 gap-2">
-              <Users className="h-5 w-5" />
-              <span className="text-sm">Browse Candidates</span>
-            </Button>
-          </Link>
-          <Link href="/employer/company">
-            <Button variant="outline" className="w-full h-auto flex-col py-4 gap-2">
-              <TrendingUp className="h-5 w-5" />
-              <span className="text-sm">Company Profile</span>
-            </Button>
-          </Link>
-        </div>
-      </DashboardCard>
     </div>
   );
 }

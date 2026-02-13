@@ -2,9 +2,8 @@
 
 import StatWidget from "@/components/admin/StatWidget";
 import DashboardCard from "@/components/admin/DashboardCard";
-import DataTable from "@/components/admin/DataTable";
 import AnalyticsChart from "@/components/admin/AnalyticsChart";
-import { FileText, Bookmark, UserCheck, Building2 } from "lucide-react";
+import { FileText, Bookmark, UserCheck, Building2, Clock } from "lucide-react";
 import { CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import React, { useState, useEffect, useCallback } from "react";
@@ -14,6 +13,34 @@ import { useToast } from "@/lib/hooks/useToast";
 import { apiClient } from "@/lib/api/client";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
+
+interface Application {
+  _id: string;
+  job: {
+    _id: string;
+    title: string;
+    company: {
+      _id: string;
+      name: string;
+      logo?: string;
+    };
+    location: string;
+    type: string;
+  };
+  status: string;
+  appliedAt: string;
+  updatedAt: string;
+}
+
+interface RecentActivityItem {
+  id: string;
+  action: string;
+  job: string;
+  company: string;
+  time: string;
+  status: string;
+  jobId: string;
+}
 
 export default function UserDashboard() {
   const toast = useToast();
@@ -31,47 +58,105 @@ export default function UserDashboard() {
     savedJobs: 0,
     profileCompletion: 0,
   });
-  interface RecentActivity {
-    type: string;
-    title: string;
-    date: string;
-  }
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
+  const [recentActivity, setRecentActivity] = useState<RecentActivityItem[]>([]);
   const [applicationsStatusData, setApplicationsStatusData] = useState<
     { name: string; value: number }[]
   >([]);
 
+  // Format relative time
+  const formatRelativeTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return "Just now";
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return date.toLocaleDateString("en-AU", { day: "numeric", month: "short" });
+  };
+
+  // Get status display name
+  const getStatusDisplay = (status: string) => {
+    const statusMap: Record<string, string> = {
+      pending: "Pending",
+      "under-review": "Under Review",
+      shortlisted: "Shortlisted",
+      rejected: "Rejected",
+      accepted: "Accepted",
+      withdrawn: "Withdrawn",
+    };
+    return statusMap[status] || status;
+  };
+
   const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
-      interface UserProfile {
-        _id: string;
-        name: string;
-        email: string;
-        profileCompletion: number;
-      }
-      const profileRes = await apiClient.get<{ user: UserProfile }>("/api/auth/profile");
+      
+      // Fetch all data in parallel
+      const [profileRes, applicationsRes, savedJobsRes] = await Promise.all([
+        apiClient.get<{ user: UserProfile }>("/api/auth/profile"),
+        apiClient.get<{ applications: Application[]; pagination: { total: number } }>("/api/applications?limit=50"),
+        apiClient.get<{ savedJobs: Array<{ _id: string }> }>("/api/saved-jobs"),
+      ]);
+
       setProfile(profileRes.user);
 
-      // Note: Applications API doesn't exist yet, so we'll use mock data structure
-      // In the future, replace with: const appsRes = await apiClient.get("/api/applications");
-      
+      const applications = applicationsRes.applications || [];
+      const savedJobs = savedJobsRes.savedJobs || [];
+
+      // Calculate stats
+      const totalApplications = applicationsRes.pagination?.total || applications.length;
+      const activeApplications = applications.filter(
+        (app) => !["rejected", "withdrawn", "accepted"].includes(app.status)
+      ).length;
+
       setStats({
-        totalApplications: 0, // Would come from applications API
-        activeApplications: 0, // Would come from applications API
-        savedJobs: 0, // Would come from saved jobs API
+        totalApplications,
+        activeApplications,
+        savedJobs: savedJobs.length,
         profileCompletion: profileRes.user.profileCompletion || 0,
       });
 
-      // Mock recent activity - in future, fetch from applications API
-      setRecentActivity([]);
-      setApplicationsStatusData([
-        { name: "Pending", value: 0 },
-        { name: "Under Review", value: 0 },
-        { name: "Shortlisted", value: 0 },
-        { name: "Rejected", value: 0 },
-        { name: "Accepted", value: 0 },
-      ]);
+      // Build recent activity from applications (sorted by most recent first)
+      const sortedApplications = [...applications].sort(
+        (a, b) => new Date(b.updatedAt || b.appliedAt).getTime() - new Date(a.updatedAt || a.appliedAt).getTime()
+      );
+
+      const activity: RecentActivityItem[] = sortedApplications.slice(0, 10).map((app) => ({
+        id: app._id,
+        action: app.status === "pending" ? "Applied to" : `Status: ${getStatusDisplay(app.status)}`,
+        job: app.job?.title || "Unknown Job",
+        company: app.job?.company?.name || "Unknown Company",
+        time: formatRelativeTime(app.updatedAt || app.appliedAt),
+        status: app.status,
+        jobId: app.job?._id || "",
+      }));
+
+      setRecentActivity(activity);
+
+      // Calculate status distribution for chart
+      const statusCounts: Record<string, number> = {
+        Pending: 0,
+        "Under Review": 0,
+        Shortlisted: 0,
+        Rejected: 0,
+        Accepted: 0,
+      };
+
+      applications.forEach((app) => {
+        const displayStatus = getStatusDisplay(app.status);
+        if (displayStatus in statusCounts) {
+          statusCounts[displayStatus]++;
+        }
+      });
+
+      // Only include statuses with value > 0
+      setApplicationsStatusData(
+        Object.entries(statusCounts)
+          .filter(([, value]) => value > 0)
+          .map(([name, value]) => ({ name, value }))
+      );
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
       toast.error("Failed to load dashboard data");
@@ -138,7 +223,7 @@ export default function UserDashboard() {
         </div>
       )}
 
-      {/* Charts Row */}
+      {/* Charts and Recent Activity Row */}
       <div className="grid gap-4 md:grid-cols-2">
         {loading ? (
           <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />
@@ -206,77 +291,111 @@ export default function UserDashboard() {
           </DashboardCard>
         )}
       </div>
+        {/* Applications Status Distribution */}
+        <div className="h-[420px]">
+          {loading ? (
+            <div className="h-full bg-gray-100 rounded-lg animate-pulse" />
+          ) : applicationsStatusData.length === 0 ? (
+            <DashboardCard
+              title="Applications Status Distribution"
+              description="Breakdown of your application statuses"
+              className="h-full"
+            >
+              <div className="flex flex-col items-center justify-center py-8 text-center h-full">
+                <FileText className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                <p className="text-muted-foreground">No applications yet</p>
+                <p className="text-sm text-muted-foreground mt-1">Apply to jobs to see your status distribution</p>
+              </div>
+            </DashboardCard>
+          ) : (
+            <AnalyticsChart
+              title="Applications Status Distribution"
+              description="Breakdown of your application statuses"
+              data={applicationsStatusData}
+              type="pie"
+              dataKey="value"
+              nameKey="name"
+            />
+          )}
+        </div>
 
-      {/* Recent Activity */}
-      <DashboardCard
-        title="Recent Activity"
-        description="Your latest job search actions"
-        action={
-          <Link href="/user/applications">
-            <Button variant="ghost" size="sm">
-              View All
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        }
-      >
-        {loading ? (
-          <div className="h-32 bg-gray-100 rounded-lg animate-pulse" />
-        ) : recentActivity.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-muted-foreground">No recent activity</p>
-            <Link href="/user/jobs">
-              <Button variant="outline" className="mt-4">
-                Browse Jobs
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <DataTable
-            data={recentActivity as unknown as Record<string, unknown>[]}
-            columns={[
-              {
-                key: "action",
-                label: "Action",
-                render: (value) => (
-                  <span className="font-medium">{String(value)}</span>
-                ),
-              },
-              {
-                key: "job",
-                label: "Job",
-              },
-              {
-                key: "company",
-                label: "Company",
-              },
-              {
-                key: "time",
-                label: "Time",
-              },
-              {
-                key: "status",
-                label: "Status",
-                render: (value) => {
-                  const variants = {
-                    active: "default",
-                    pending: "secondary",
-                    completed: "outline",
-                    saved: "secondary",
-                  } as const;
+        {/* Recent Activity */}
+        <div className="h-[420px]">
+          {loading ? (
+            <div className="h-full bg-gray-100 rounded-lg animate-pulse" />
+          ) : (
+            <DashboardCard
+              title="Recent Activity"
+              description="Your latest job application updates"
+              className="h-full"
+            action={
+              <Link href="/user/applications">
+                <Button variant="ghost" size="sm">
+                  View All
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            }
+          >
+            {recentActivity.length === 0 ? (
+              <div className="text-center py-8 flex-1 flex flex-col items-center justify-center">
+                <p className="text-muted-foreground">No recent activity</p>
+                <p className="text-sm text-muted-foreground mt-1">Apply to jobs to see your activity here</p>
+                <Link href="/user/jobs">
+                  <Button variant="outline" className="mt-4">
+                    Browse Jobs
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3 flex-1 overflow-y-auto">
+                {recentActivity.map((activity) => {
+                  const statusColors: Record<string, string> = {
+                    pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400",
+                    "under-review": "bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400",
+                    shortlisted: "bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400",
+                    rejected: "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400",
+                    accepted: "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400",
+                    withdrawn: "bg-gray-100 text-gray-800 dark:bg-gray-900/20 dark:text-gray-400",
+                  };
+
                   return (
-                    <Badge variant={variants[value as keyof typeof variants] || "outline"}>
-                      {String(value)}
-                    </Badge>
+                    <Link
+                      key={activity.id}
+                      href={`/user/jobs/${activity.jobId}`}
+                      className="block"
+                    >
+                      <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-[#B260E6]/10 to-[#ED84A5]/10 shrink-0">
+                            <FileText className="h-5 w-5 text-[#B260E6]" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate">{activity.job}</p>
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Building2 className="h-3 w-3 shrink-0" />
+                              <span className="truncate">{activity.company}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <Badge className={`${statusColors[activity.status] || "bg-gray-100"} text-xs`}>
+                            {getStatusDisplay(activity.status)}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground hidden sm:flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {activity.time}
+                          </span>
+                        </div>
+                      </div>
+                    </Link>
                   );
-                },
-              },
-            ]}
-            searchable={false}
-            actions={false}
-          />
-        )}
-      </DashboardCard>
+                })}
+              </div>
+            )}
+          </DashboardCard>
+          )}
+        </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Card, CardContent } from "@/components/ui/card";
 import React from "react";
@@ -55,7 +55,7 @@ export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const _fetchCompanies = useCallback(async () => {
+  const fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -95,6 +95,10 @@ export default function CompaniesPage() {
       toast.success("Company added to followed");
     }
   };
+
+  useEffect(() => {
+    fetchCompanies();
+  }, [fetchCompanies]);
 
   const resetFilters = () => {
     setSearchQuery("");
