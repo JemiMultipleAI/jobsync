@@ -10,9 +10,17 @@ export interface AuthenticatedRequest extends NextRequest {
   };
 }
 
+/**
+ * Authenticates a request by verifying the JWT token
+ * @param request - The NextRequest object
+ * @returns Object with authenticated user or error response
+ */
 export async function authenticateRequest(
   request: NextRequest
-): Promise<{ user: any; error: null } | { user: null; error: NextResponse }> {
+): Promise<
+  | { user: { userId: string; email: string; role: "user" | "admin" | "employer" }; error: null }
+  | { user: null; error: NextResponse }
+> {
   try {
     // Connect to database
     await connectDB();
@@ -36,10 +44,10 @@ export async function authenticateRequest(
     const payload = verifyToken(token);
 
     return {
-      user: payload,
+      user: payload as { userId: string; email: string; role: "user" | "admin" | "employer" },
       error: null,
     };
-  } catch (error: any) {
+  } catch {
     return {
       user: null,
       error: NextResponse.json(
@@ -50,6 +58,11 @@ export async function authenticateRequest(
   }
 }
 
+/**
+ * Checks if the user has admin role
+ * @param user - The authenticated user object
+ * @returns NextResponse with error if not admin, null if admin
+ */
 export function requireAdmin(
   user: { role: string } | null
 ): NextResponse | null {
@@ -62,6 +75,11 @@ export function requireAdmin(
   return null;
 }
 
+/**
+ * Checks if the user has employer role
+ * @param user - The authenticated user object
+ * @returns NextResponse with error if not employer, null if employer
+ */
 export function requireEmployer(
   user: { role: string } | null
 ): NextResponse | null {

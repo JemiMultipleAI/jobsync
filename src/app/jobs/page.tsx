@@ -19,7 +19,6 @@ import { Wrench,
   Cog, 
   Search, 
   MapPin, 
-  Filter, 
   Clock, 
   ArrowRight,
   DollarSign,
@@ -75,63 +74,6 @@ export default function JobsPage() {
 
   const locations = ["All", "Sydney, NSW", "Melbourne, VIC", "Brisbane, QLD", "Perth, WA", "Adelaide, SA", "Canberra, ACT"];
 
-  const featuredJobs = [
-    {
-      title: "Experienced Plumber",
-      company: "AquaFlow Services",
-      location: "Sydney, NSW",
-      salary: "$75,000 - $95,000/year",
-      type: "Full-time",
-      posted: "2 days ago",
-      image: "/images/plumber.PNG",
-    },
-    {
-      title: "Commercial Electrician",
-      company: "BrightVolt Ltd.",
-      location: "Melbourne, VIC",
-      salary: "$85,000 - $110,000/year",
-      type: "Full-time",
-      posted: "1 day ago",
-      image: "/images/electrician.PNG",
-    },
-    {
-      title: "Construction Site Manager",
-      company: "UrbanBuild Co.",
-      location: "Brisbane, QLD",
-      salary: "$120,000 - $150,000/year",
-      type: "Full-time",
-      posted: "3 days ago",
-      image: "/images/construction.PNG",
-    },
-    {
-      title: "Heavy Vehicle Driver Logistics",
-      company: "TransRoad Logistics",
-      location: "Perth, WA",
-      salary: "$65,000 - $80,000/year",
-      type: "Full-time",
-      posted: "4 days ago",
-      image: "/images/driver.PNG",
-    },
-    {
-      title: "Senior Painter / Decorator",
-      company: "ColourFinish Pty Ltd",
-      location: "Adelaide, SA",
-      salary: "$55,000 - $70,000/year",
-      type: "Full-time",
-      posted: "5 days ago",
-      image: "/images/painter.PNG",
-    },
-    {
-      title: "Chef de Partie Hotel Kitchen",
-      company: "GrandHarbour Hotel & Resorts",
-      location: "Sydney, NSW",
-      salary: "$60,000 - $75,000/year",
-      type: "Full-time",
-      posted: "2 days ago",
-      image: "/images/chef.PNG",
-    },
-  ];
-
   const fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
@@ -162,7 +104,14 @@ export default function JobsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedCategory, selectedType, selectedLocation, searchTerm, toast]);
+  }, [page, selectedCategory, selectedLocation, searchTerm, toast]);
+
+  // Get featured jobs (first 6 jobs from database)
+  const featuredJobs = jobs.slice(0, 6);
+
+  useEffect(() => {
+    fetchJobs();
+  }, [fetchJobs]);
 
   const formatSalary = (salary?: { min?: number; max?: number; currency?: string; period?: string }) => {
     if (!salary || (!salary.min && !salary.max)) return "Salary not specified";
@@ -220,7 +169,7 @@ export default function JobsPage() {
                     placeholder="Search jobs, companies, locations..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B260E6] focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 focus:ring-2 focus:ring-[#B260E6] focus:border-transparent transition-colors"
                   />
                 </div>
               </div>
@@ -228,7 +177,7 @@ export default function JobsPage() {
                 <select
                   value={selectedType}
                   onChange={(e) => setSelectedType(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B260E6]"
+                  className="px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:bg-gray-100 focus:ring-2 focus:ring-[#B260E6] focus:border-transparent transition-colors"
                 >
                   <option value="All">All Types</option>
                   <option value="full-time">Full-time</option>
@@ -239,7 +188,7 @@ export default function JobsPage() {
                 <select
                   value={selectedLocation}
                   onChange={(e) => setSelectedLocation(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B260E6]"
+                  className="px-4 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:bg-gray-100 focus:ring-2 focus:ring-[#B260E6] focus:border-transparent transition-colors"
                 >
                   {locations.map((loc) => (
                     <option key={loc} value={loc}>
@@ -289,60 +238,77 @@ export default function JobsPage() {
             </div>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {featuredJobs.map((job, index) => (
-              <Card
-                key={index}
-                className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden"
-              >
-                <div className="relative h-40 overflow-hidden">
-                  <Image
-                    src={job.image}
-                    alt={job.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      {job.posted}
-                    </span>
-                  </div>
-                </div>
-
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        {job.title}
-                      </h3>
-                      <p className="text-gray-600 font-medium">{job.company}</p>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-4 border-[#B260E6] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+              <p className="text-gray-600">Loading featured jobs...</p>
+            </div>
+          ) : featuredJobs.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 text-lg">No featured jobs available at the moment.</p>
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {featuredJobs.map((job) => (
+                <Card
+                  key={job._id}
+                  className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 group overflow-hidden"
+                >
+                  <div className="relative h-40 overflow-hidden">
+                    {job.image ? (
+                      <Image
+                        src={job.image}
+                        alt={job.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full bg-gradient-to-br from-[#B260E6] to-[#ED84A5] text-white text-4xl">
+                        <Briefcase className="h-16 w-16" />
+                      </div>
+                    )}
+                    <div className="absolute top-4 right-4">
+                      <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        {formatDate(job.createdAt)}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2 text-[#ED84A5]" />
-                      {job.location}
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          {job.title}
+                        </h3>
+                        <p className="text-gray-600 font-medium">{job.company?.name || "Company"}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center text-gray-600">
-                      <DollarSign className="h-4 w-4 mr-2 text-[#ED84A5]" />
-                      {job.salary}
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Clock className="h-4 w-4 mr-2 text-[#ED84A5]" />
-                      {job.type}
-                    </div>
-                  </div>
 
-                  <Link href="/auth/register">
-                    <Button className="w-full bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white rounded-full">
-                      Apply Now
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center text-gray-600">
+                        <MapPin className="h-4 w-4 mr-2 text-[#ED84A5]" />
+                        {job.location}
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <DollarSign className="h-4 w-4 mr-2 text-[#ED84A5]" />
+                        {formatSalary(job.salary)}
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <Clock className="h-4 w-4 mr-2 text-[#ED84A5]" />
+                        {job.type}
+                      </div>
+                    </div>
+
+                    <Link href={`/jobs/${job._id}`}>
+                      <Button className="w-full bg-gradient-to-r from-[#B260E6] to-[#ED84A5] hover:from-[#A050D6] hover:to-[#DD74A5] text-white rounded-full">
+                        Apply Now
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

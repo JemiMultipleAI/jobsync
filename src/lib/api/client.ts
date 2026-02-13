@@ -34,11 +34,22 @@ class ApiClient {
       const response = await fetch(url, config);
 
       if (!response.ok) {
-        const error: ApiError = await response.json();
+        let error: ApiError;
+        try {
+          error = await response.json();
+        } catch {
+          // If response is not JSON, create error from status
+          error = { error: `HTTP error! status: ${response.status}` };
+        }
         throw new Error(error.error || `HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      try {
+        return await response.json();
+      } catch {
+        // If response is not JSON, throw a descriptive error
+        throw new Error("Invalid JSON response from server");
+      }
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw error;
@@ -84,11 +95,22 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error: ApiError = await response.json();
+      let error: ApiError;
+      try {
+        error = await response.json();
+      } catch {
+        // If response is not JSON, create error from status
+        error = { error: `HTTP error! status: ${response.status}` };
+      }
       throw new Error(error.error || `HTTP error! status: ${response.status}`);
     }
 
-    return await response.json();
+    try {
+      return await response.json();
+    } catch {
+      // If response is not JSON, throw a descriptive error
+      throw new Error("Invalid JSON response from server");
+    }
   }
 }
 

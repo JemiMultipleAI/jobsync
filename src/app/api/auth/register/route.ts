@@ -14,6 +14,12 @@ const registerSchema = z.object({
   role: z.enum(["user", "admin", "employer"]).default("user"),
 });
 
+/**
+ * POST /api/auth/register
+ * Registers a new user account
+ * @param request - The NextRequest object containing user registration data
+ * @returns NextResponse with user data and sets authentication cookie
+ */
 export async function POST(request: NextRequest) {
   try {
     await connectDB();

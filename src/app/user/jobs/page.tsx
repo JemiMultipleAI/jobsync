@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Card, CardContent } from "@/components/ui/card";
 import React from "react";
@@ -64,7 +64,7 @@ export default function BrowseJobsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const fetchJobs = useCallback(async () => {
+  const _fetchJobs = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -95,7 +95,7 @@ export default function BrowseJobsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, selectedType, selectedLocation, selectedIndustry, searchQuery, toast]);
+  }, [page, selectedLocation, selectedIndustry, searchQuery, toast]);
 
   const toggleSaveJob = (jobId: string) => {
     if (savedJobs.includes(jobId)) {

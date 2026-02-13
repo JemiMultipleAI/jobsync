@@ -311,7 +311,7 @@ export default function EmployerJobsPage() {
           <div className="text-center py-8">
             <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground mb-4">
-              You haven't posted any jobs yet.
+              You haven&apos;t posted any jobs yet.
             </p>
             <Button onClick={handleCreate} disabled={!userCompany}>
               <Plus className="mr-2 h-4 w-4" />

@@ -93,7 +93,21 @@ export default function RegisterPage() {
         }),
       });
 
-      const result = await response.json();
+      // Safely parse JSON response
+      let result: { error?: string; user?: { role: string } } = {};
+      try {
+        result = await response.json();
+      } catch {
+        // If response is not JSON, use status text
+        const errorMessage = response.statusText || "Registration failed";
+        if (typeof window !== "undefined" && 'toast' in window && typeof (window as { toast?: { error: (msg: string) => void } }).toast?.error === 'function') {
+          (window as { toast: { error: (msg: string) => void } }).toast.error(errorMessage);
+        } else {
+          alert(errorMessage);
+        }
+        setIsSubmitting(false);
+        return;
+      }
 
       if (!response.ok) {
         const errorMessage = result.error || "Registration failed";
@@ -108,9 +122,9 @@ export default function RegisterPage() {
       }
 
       // Redirect based on role
-      if (result.user.role === "admin") {
+      if (result.user?.role === "admin") {
         router.push("/admin");
-      } else if (result.user.role === "employer") {
+      } else if (result.user?.role === "employer") {
         router.push("/employer");
       } else {
         router.push("/user");
@@ -330,7 +344,7 @@ export default function RegisterPage() {
                       id="name"
                       type="text"
                       placeholder="Enter your full name"
-                      className={`h-12 pl-10 border-gray-200 rounded-xl transition-all duration-200 ${
+                      className={`h-12 pl-10 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-all duration-200 ${
                         errors.name
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"
@@ -364,7 +378,7 @@ export default function RegisterPage() {
                       id="email"
                       type="email"
                       placeholder="Enter your email"
-                      className={`h-12 pl-10 border-gray-200 rounded-xl transition-all duration-200 ${
+                      className={`h-12 pl-10 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-all duration-200 ${
                         errors.email
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"
@@ -398,7 +412,7 @@ export default function RegisterPage() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Create a strong password"
-                      className={`h-12 pl-10 pr-12 border-gray-200 rounded-xl transition-all duration-200 ${
+                      className={`h-12 pl-10 pr-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-all duration-200 ${
                         errors.password
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"
@@ -544,7 +558,7 @@ export default function RegisterPage() {
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm your password"
-                      className={`h-12 pl-10 pr-12 border-gray-200 rounded-xl transition-all duration-200 ${
+                      className={`h-12 pl-10 pr-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-all duration-200 ${
                         errors.confirmPassword
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"

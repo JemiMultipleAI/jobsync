@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";

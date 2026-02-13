@@ -7,7 +7,13 @@ import { handleApiError } from "@/lib/api/error-handler";
 import { z } from "zod";
 import mongoose from "mongoose";
 
-// GET - List all users in employer's company
+/**
+ * GET /api/employer/company/users
+ * Lists all users in the employer's company
+ * Requires employer authentication
+ * @param request - The NextRequest object
+ * @returns NextResponse with array of company users
+ */
 export async function GET(request: NextRequest) {
   try {
     const authResult = await authenticateRequest(request);
@@ -45,7 +51,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST - Add/invite user to company
+/**
+ * POST /api/employer/company/users
+ * Adds a user to the employer's company
+ * Requires employer authentication
+ * @param request - The NextRequest object containing userId or email
+ * @returns NextResponse with added user data
+ */
 export async function POST(request: NextRequest) {
   try {
     const authResult = await authenticateRequest(request);

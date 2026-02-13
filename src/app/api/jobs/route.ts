@@ -5,6 +5,9 @@ import Company from "@/lib/models/Company";
 import User from "@/lib/models/User";
 import { authenticateRequest } from "@/lib/api/middleware";
 import { handleApiError } from "@/lib/api/error-handler";
+import { validateObjectId, validatePagination } from "@/lib/api/validation";
+import { rateLimit, rateLimitConfigs } from "@/lib/api/rate-limit";
+import { logRequest } from "@/lib/api/request-logger";
 import { z } from "zod";
 
 const createJobSchema = z.object({
@@ -27,13 +30,31 @@ const createJobSchema = z.object({
   image: z.string().optional(),
 });
 
+/**
+ * GET /api/jobs
+ * Retrieves a paginated list of jobs with optional filtering
+ * @param request - The NextRequest object
+ * @returns NextResponse with jobs array and pagination info
+ */
 export async function GET(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
+    // Rate limiting
+    const rateLimitError = rateLimit(request, rateLimitConfigs.read);
+    if (rateLimitError) {
+      logRequest(request, rateLimitError, startTime);
+      return rateLimitError;
+    }
+
     await connectDB();
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const { page, limit, skip } = validatePagination(
+      searchParams.get("page"),
+      searchParams.get("limit"),
+      100 // Max 100 items per page
+    );
     const status = searchParams.get("status") || "active";
     const industry = searchParams.get("industry");
     const location = searchParams.get("location");
@@ -56,8 +77,6 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    const skip = (page - 1) * limit;
-
     const [jobs, total] = await Promise.all([
       Job.find(query)
         .populate("company", "name logo industry location")
@@ -69,7 +88,7 @@ export async function GET(request: NextRequest) {
       Job.countDocuments(query),
     ]);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       jobs,
       pagination: {
         page,
@@ -78,28 +97,48 @@ export async function GET(request: NextRequest) {
         pages: Math.ceil(total / limit),
       },
     });
+
+    logRequest(request, response, startTime);
+    return response;
   } catch (error) {
-    console.error("Get jobs error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    const response = handleApiError(error);
+    logRequest(request, response, startTime, undefined, error instanceof Error ? error.message : String(error));
+    return response;
   }
 }
 
+/**
+ * POST /api/jobs
+ * Creates a new job posting
+ * Requires admin or employer authentication
+ * @param request - The NextRequest object
+ * @returns NextResponse with created job data
+ */
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  
   try {
+    // Rate limiting
+    const rateLimitError = rateLimit(request, rateLimitConfigs.standard);
+    if (rateLimitError) {
+      logRequest(request, rateLimitError, startTime);
+      return rateLimitError;
+    }
+
     const authResult = await authenticateRequest(request);
     if (authResult.error) {
+      logRequest(request, authResult.error, startTime);
       return authResult.error;
     }
 
     // Allow both admins and employers to create jobs
     if (authResult.user!.role !== "admin" && authResult.user!.role !== "employer") {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Admin or employer access required" },
         { status: 403 }
       );
+      logRequest(request, response, startTime, authResult.user.userId);
+      return response;
     }
 
     await connectDB();
@@ -107,13 +146,22 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = createJobSchema.parse(body);
 
+    // Validate company ID format
+    const companyIdError = validateObjectId(validatedData.company, "Company ID");
+    if (companyIdError) {
+      logRequest(request, companyIdError, startTime, authResult.user.userId);
+      return companyIdError;
+    }
+
     // Verify company exists
     const company = await Company.findById(validatedData.company);
     if (!company) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: "Company not found" },
         { status: 404 }
       );
+      logRequest(request, response, startTime, authResult.user.userId);
+      return response;
     }
 
     // If employer, verify they own the company
@@ -143,15 +191,20 @@ export async function POST(request: NextRequest) {
       .populate("postedBy", "name email")
       .lean();
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       {
         message: "Job created successfully",
         job: populatedJob,
       },
       { status: 201 }
     );
+
+    logRequest(request, response, startTime, authResult.user.userId);
+    return response;
   } catch (error) {
-    return handleApiError(error);
+    const response = handleApiError(error);
+    logRequest(request, response, startTime, undefined, error instanceof Error ? error.message : String(error));
+    return response;
   }
 }
 

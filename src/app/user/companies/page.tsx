@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import DashboardCard from "@/components/admin/DashboardCard";
 import { Card, CardContent } from "@/components/ui/card";
 import React from "react";
@@ -55,7 +55,7 @@ export default function CompaniesPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchCompanies = useCallback(async () => {
+  const _fetchCompanies = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({

@@ -185,7 +185,7 @@ export default function UserDashboard() {
                   desc: "View saved positions",
                   href: "/user/saved-jobs",
                 },
-              ].map((action, index) => {
+              ].map((action) => {
                 const Icon = action.icon;
                 return (
                   <Link key={action.label} href={action.href}>

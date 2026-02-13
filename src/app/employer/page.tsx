@@ -22,8 +22,8 @@ export default function EmployerDashboard() {
     totalApplications: 0,
     pendingApplications: 0,
   });
-  const [recentApplications, setRecentApplications] = useState<any[]>([]);
-  const [recentJobs, setRecentJobs] = useState<any[]>([]);
+  const [recentApplications, setRecentApplications] = useState<Array<{ id: string; candidate: string; job: string; status: string; date: string }>>([]);
+  const [recentJobs, setRecentJobs] = useState<Array<{ id: string; title: string; applications: number; status: string; date: string }>>([]);
 
   const fetchDashboardData = useCallback(async () => {
     try {

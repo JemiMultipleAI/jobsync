@@ -4,20 +4,16 @@
 
 import AutoSlider from "@/components/ui/AutoSlider";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Shield } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card"
+import { CheckCircle } from "lucide-react";
+import { Card } from "@/components/ui/card"
 import Image from "next/image";
 import Link from "next/link";
 import {
-  MapPin,
-  Clock,
-  DollarSign,
   Star,
   ArrowRight,
   FileCheck,
   Bot,
   Cloud,
-  Users,
   BadgeCheck,
   UserPlus,
   ShieldCheck,
@@ -26,12 +22,6 @@ import {
 } from "lucide-react"
 
 export default function Home() {
-  const stats = [
-    { number: "50,000+", label: "Verified Professionals" },
-    { number: "10,000+", label: "Trusted Employers" },
-    { number: "100,000+", label: "Credentials Verified" },
-    { number: "98%", label: "Compliance Rate" },
-  ];
 
   const industries = [
     {
@@ -66,7 +56,7 @@ export default function Home() {
     },
   ];
 
-  const features = [
+  const _features = [
     {
       icon: <FileCheck className="h-10 w-10" />,
       title: "Verified Credentials",
@@ -87,7 +77,7 @@ export default function Home() {
     },
   ];
 
-  const featuredJobs = [
+  const _featuredJobs = [
     {
       title: "Experienced Plumber",
       company: "AquaFlow Services",

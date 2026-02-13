@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import mongoose from "mongoose";
+import { env } from "@/lib/config/env";
 
 /**
  * Centralized error handling for API routes
@@ -66,7 +67,7 @@ export function handleApiError(error: unknown): NextResponse {
   }
 
   // Log the full error for debugging (server-side only)
-  if (process.env.NODE_ENV === "development") {
+  if (env.NODE_ENV === "development") {
     console.error("[API Error]", error);
   } else {
     // In production, log minimal information
@@ -80,7 +81,7 @@ export function handleApiError(error: unknown): NextResponse {
   return NextResponse.json(
     {
       error: "Internal server error",
-      message: process.env.NODE_ENV === "development"
+      message: env.NODE_ENV === "development"
         ? error instanceof Error
           ? error.message
           : "An unknown error occurred"

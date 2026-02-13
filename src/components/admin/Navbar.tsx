@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Bell, User, LogOut, Settings } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Bell, User, LogOut, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +21,6 @@ import { useToast } from "@/lib/hooks/useToast";
 export default function Navbar() {
   const router = useRouter();
   const toast = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<{ name?: string; email?: string; profileImage?: string } | null>(null);
 
   useEffect(() => {
@@ -71,18 +69,6 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/80 px-6 shadow-sm">
-      {/* Search */}
-      <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-9 w-full pl-10 pr-4 rounded-xl bg-background/50 border-border/50 focus:bg-background transition-colors"
-        />
-      </div>
-
       <div className="ml-auto flex items-center gap-4">
         {/* Notifications */}
         <DropdownMenu>

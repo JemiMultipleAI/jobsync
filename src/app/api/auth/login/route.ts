@@ -12,6 +12,12 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+/**
+ * POST /api/auth/login
+ * Authenticates a user and returns a JWT token
+ * @param request - The NextRequest object containing email and password
+ * @returns NextResponse with user data and sets authentication cookie
+ */
 export async function POST(request: NextRequest) {
   try {
     await connectDB();

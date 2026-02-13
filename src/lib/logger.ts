@@ -3,9 +3,11 @@
  * Provides consistent logging with proper levels and environment handling
  */
 
+import { env } from "./config/env";
+
 type LogLevel = "debug" | "info" | "warn" | "error";
 
-const isDevelopment = process.env.NODE_ENV === "development";
+const isDevelopment = env.NODE_ENV === "development";
 
 function formatMessage(level: LogLevel, ...args: unknown[]): string {
   const timestamp = new Date().toISOString();

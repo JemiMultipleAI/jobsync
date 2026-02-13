@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Bell, User, LogOut, Settings } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Bell, User, LogOut, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +21,6 @@ import { useToast } from "@/lib/hooks/useToast";
 export default function Navbar() {
   const router = useRouter();
   const toast = useToast();
-  const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<{ name?: string; email?: string; profileImage?: string } | null>(null);
 
   useEffect(() => {
@@ -31,7 +29,14 @@ export default function Navbar() {
 
   const fetchUserProfile = async () => {
     try {
-      const data = await apiClient.get<{ user: any }>("/api/auth/profile");
+      interface UserProfile {
+        _id: string;
+        name: string;
+        email: string;
+        role: string;
+        profileImage?: string;
+      }
+      const data = await apiClient.get<{ user: UserProfile }>("/api/auth/profile");
       setUser(data.user);
     } catch (error) {
       // Silently fail - user might not be logged in or token expired
@@ -64,18 +69,6 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 px-6 shadow-sm">
-      {/* Search */}
-      <div className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          type="search"
-          placeholder="Search jobs, companies..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-9 w-full pl-10 pr-4 rounded-lg bg-background"
-        />
-      </div>
-
       <div className="ml-auto flex items-center gap-4">
         {/* Notifications */}
         <DropdownMenu>

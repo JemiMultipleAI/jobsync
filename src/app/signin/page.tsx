@@ -75,7 +75,7 @@ export default function SignInPage() {
                     id="email" 
                     type="email" 
                     placeholder="Enter your email" 
-                    className="h-12 border-gray-200 rounded-xl focus:border-[#B260E6] focus:ring-[#B260E6] transition-colors"
+                    className="h-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 focus:border-[#B260E6] focus:ring-[#B260E6] transition-colors"
                   />
                 </div>
 
@@ -93,7 +93,7 @@ export default function SignInPage() {
                       id="password" 
                       type={showPassword ? "text" : "password"} 
                       placeholder="Enter your password" 
-                      className="h-12 border-gray-200 rounded-xl focus:border-[#B260E6] focus:ring-[#B260E6] transition-colors pr-12"
+                      className="h-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 focus:border-[#B260E6] focus:ring-[#B260E6] transition-colors pr-12"
                     />
                     <button
                       type="button"

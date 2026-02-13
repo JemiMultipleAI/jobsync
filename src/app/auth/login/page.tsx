@@ -65,7 +65,17 @@ export default function LoginPage() {
         }),
       });
 
-      const result = await response.json();
+      // Safely parse JSON response
+      let result: { error?: string; user?: { role: string } } = {};
+      try {
+        result = await response.json();
+      } catch {
+        // If response is not JSON, use status text
+        const errorMessage = response.statusText || "Login failed";
+        toast.error(errorMessage);
+        setIsSubmitting(false);
+        return;
+      }
 
       if (!response.ok) {
         const errorMessage = result.error || "Login failed";
@@ -79,9 +89,9 @@ export default function LoginPage() {
       // The cookie is set by the server response
       // Wait for it to be fully processed, then redirect
       let redirectPath = "/user";
-      if (result.user.role === "admin") {
+      if (result.user?.role === "admin") {
         redirectPath = "/admin";
-      } else if (result.user.role === "employer") {
+      } else if (result.user?.role === "employer") {
         redirectPath = "/employer";
       }
       
@@ -251,7 +261,7 @@ export default function LoginPage() {
                       id="email"
                       type="email"
                       placeholder="Enter your email"
-                      className={`h-12 pl-10 border-gray-200 rounded-xl transition-all duration-200 ${
+                      className={`h-12 pl-10 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-all duration-200 ${
                         errors.email
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"
@@ -293,7 +303,7 @@ export default function LoginPage() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Enter your password"
-                      className={`h-12 pl-10 pr-12 border-gray-200 rounded-xl transition-all duration-200 ${
+                      className={`h-12 pl-10 pr-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-all duration-200 ${
                         errors.password
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"

@@ -122,7 +122,17 @@ export default function SignUpPage() {
         }),
       })
 
-      const data = await res.json()
+      // Safely parse JSON response
+      let data: { error?: string; user?: { role: string } } = {};
+      try {
+        data = await res.json();
+      } catch {
+        // If response is not JSON, use status text
+        toast.error(res.statusText || "Something went wrong");
+        setLoading(false);
+        return;
+      }
+
       if (res.ok) {
         toast.success("Account created successfully! Redirecting...");
         // Redirect based on role
@@ -220,7 +230,7 @@ export default function SignUpPage() {
                     <Input
                       id="firstname"
                       placeholder="John"
-                      className={`h-12 border-gray-200 rounded-xl transition-colors ${
+                      className={`h-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-colors ${
                         errors.firstname && touched.firstname
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"
@@ -244,7 +254,7 @@ export default function SignUpPage() {
                     <Input
                       id="lastname"
                       placeholder="Smith"
-                      className={`h-12 border-gray-200 rounded-xl transition-colors ${
+                      className={`h-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-colors ${
                         errors.lastname && touched.lastname
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"
@@ -271,7 +281,7 @@ export default function SignUpPage() {
                     id="email"
                     type="email"
                     placeholder="Enter your email"
-                    className={`h-12 border-gray-200 rounded-xl transition-colors ${
+                    className={`h-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-colors ${
                       errors.email && touched.email
                         ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                         : "focus:border-[#B260E6] focus:ring-[#B260E6]"
@@ -298,7 +308,7 @@ export default function SignUpPage() {
                       id="password"
                       type={showPassword ? "text" : "password"}
                       placeholder="Create a strong password"
-                      className={`h-12 border-gray-200 rounded-xl transition-colors pr-12 ${
+                      className={`h-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-colors pr-12 ${
                         errors.password && touched.password
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"
@@ -367,7 +377,7 @@ export default function SignUpPage() {
                       id="confirmPassword"
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="Confirm your password"
-                      className={`h-12 border-gray-200 rounded-xl transition-colors pr-12 ${
+                      className={`h-12 border-gray-200 rounded-xl bg-gray-50 text-gray-900 placeholder:text-gray-500 focus:bg-gray-100 transition-colors pr-12 ${
                         (errors.confirmPassword && touched.confirmPassword) || (form.confirmPassword && form.password !== form.confirmPassword)
                           ? "border-red-300 focus:border-red-500 focus:ring-red-500"
                           : "focus:border-[#B260E6] focus:ring-[#B260E6]"

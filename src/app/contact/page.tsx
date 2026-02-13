@@ -176,14 +176,14 @@ const Contact = () => {
       </section>
 
       {/* CONTACT FORM */}
-      <section className="py-16 bg-gray-50">
+      <section className="pb-16 bg-gray-50">
         <div className="max-w-4xl mx-auto px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4 text-gray-900">Send Us a Message</h2>
+          <div className="text-center mb-4">
+            <h2 className="text-4xl font-bold mb-2 text-gray-900">Send Us a Message</h2>
             <p className="text-lg text-gray-600">Fill out the form below and we&apos;ll get back to you as soon as possible.</p>
           </div>
 
-          <Card className="border-gray-200 shadow-lg">
+          <Card className="border-gray-200 shadow-lg pt-0">
             <div className="relative h-32 bg-gradient-to-r from-[#B260E6] to-[#ED84A5] rounded-t-xl overflow-hidden">
               <div className="absolute inset-0 flex flex-col items-center justify-center text-white text-center px-4">
                 <h3 className="text-3xl font-bold mb-2">Send Us a Message</h3>
