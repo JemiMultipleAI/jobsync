@@ -7,7 +7,7 @@ export type SavedJob = {
   title: string
   company: string
   location: string
-  type: "Full-time" | "Part-time" | "Contract"
+  type: "Full-time" | "Part-time" | "Contract" | "Temporary" | "Casual"
 }
 
 export function SavedJobs({ jobs }: { jobs: SavedJob[] }) {

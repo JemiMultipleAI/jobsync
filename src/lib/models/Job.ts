@@ -12,7 +12,7 @@ export interface IJob extends Document {
     currency?: string;
     period?: string; // "year", "month", "hour"
   };
-  type: "full-time" | "part-time" | "contract" | "temporary";
+  type: "full-time" | "part-time" | "contract" | "temporary" | "casual";
   status: "active" | "closed" | "draft";
   industry: string;
   experienceLevel?: "entry" | "mid" | "senior" | "executive";
@@ -63,7 +63,7 @@ const JobSchema = new Schema<IJob>(
     },
     type: {
       type: String,
-      enum: ["full-time", "part-time", "contract", "temporary"],
+      enum: ["full-time", "part-time", "contract", "temporary", "casual"],
       required: [true, "Job type is required"],
     },
     status: {

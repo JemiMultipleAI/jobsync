@@ -20,7 +20,7 @@ const updateJobSchema = z.object({
       period: z.enum(["year", "month", "hour"]).optional(),
     })
     .optional(),
-  type: z.enum(["full-time", "part-time", "contract", "temporary"]).optional(),
+  type: z.enum(["full-time", "part-time", "contract", "temporary", "casual"]).optional(),
   status: z.enum(["active", "closed", "draft"]).optional(),
   industry: z.string().min(1).optional(),
   experienceLevel: z.enum(["entry", "mid", "senior", "executive"]).optional(),

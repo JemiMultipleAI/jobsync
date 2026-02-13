@@ -150,6 +150,8 @@ export default function SavedJobsPage() {
       "Full-time": "bg-green-500/10 text-green-700 dark:text-green-400",
       "Part-time": "bg-blue-500/10 text-blue-700 dark:text-blue-400",
       Contract: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
+      Temporary: "bg-purple-500/10 text-purple-700 dark:text-purple-400",
+      Casual: "bg-pink-500/10 text-pink-700 dark:text-pink-400",
     };
     return colors[normalizedType] || "bg-gray-500/10 text-gray-700 dark:text-gray-400";
   };

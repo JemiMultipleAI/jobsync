@@ -259,6 +259,7 @@ export default function EmployerJobsPage() {
       "part-time": { label: "Part-time", className: "bg-purple-500/10 text-purple-700 dark:text-purple-400" },
       contract: { label: "Contract", className: "bg-orange-500/10 text-orange-700 dark:text-orange-400" },
       temporary: { label: "Temporary", className: "bg-pink-500/10 text-pink-700 dark:text-pink-400" },
+      casual: { label: "Casual", className: "bg-pink-500/10 text-pink-700 dark:text-pink-400" },
     };
     const variant = variants[type] || { label: type, className: "bg-gray-500/10 text-gray-700" };
     return <Badge className={variant.className}>{variant.label}</Badge>;
@@ -419,6 +420,7 @@ export default function EmployerJobsPage() {
                       <SelectItem value="part-time">Part-time</SelectItem>
                       <SelectItem value="contract">Contract</SelectItem>
                       <SelectItem value="temporary">Temporary</SelectItem>
+                      <SelectItem value="casual">Casual</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

@@ -113,6 +113,7 @@ export default function BrowseJobsPage() {
       "part-time": "bg-blue-500/10 text-blue-700 dark:text-blue-400",
       contract: "bg-orange-500/10 text-orange-700 dark:text-orange-400",
       temporary: "bg-purple-500/10 text-purple-700 dark:text-purple-400",
+      casual: "bg-pink-500/10 text-pink-700 dark:text-pink-400",
     };
     return colors[type] || "bg-gray-500/10 text-gray-700 dark:text-gray-400";
   };
@@ -221,6 +222,7 @@ export default function BrowseJobsPage() {
                     <SelectItem value="part-time">Part-time</SelectItem>
                     <SelectItem value="contract">Contract</SelectItem>
                     <SelectItem value="temporary">Temporary</SelectItem>
+                    <SelectItem value="casual">Casual</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

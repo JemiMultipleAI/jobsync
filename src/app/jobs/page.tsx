@@ -184,6 +184,7 @@ export default function JobsPage() {
                   <option value="part-time">Part-time</option>
                   <option value="contract">Contract</option>
                   <option value="temporary">Temporary</option>
+                  <option value="casual">Casual</option>
                 </select>
                 <select
                   value={selectedLocation}

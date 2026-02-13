@@ -24,7 +24,7 @@ const createJobSchema = z.object({
       period: z.enum(["year", "month", "hour"]).default("year"),
     })
     .optional(),
-  type: z.enum(["full-time", "part-time", "contract", "temporary"]),
+  type: z.enum(["full-time", "part-time", "contract", "temporary", "casual"]),
   industry: z.string().min(1, "Industry is required"),
   experienceLevel: z.enum(["entry", "mid", "senior", "executive"]).optional(),
   image: z.string().optional(),

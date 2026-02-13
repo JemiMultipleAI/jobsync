@@ -28,6 +28,7 @@ const JobCard: React.FC<JobCardProps> = ({ job }) => {
       "Part-time": "from-blue-500 to-cyan-500",
       "Contract": "from-orange-500 to-red-500",
       "Temporary": "from-yellow-500 to-amber-500",
+      "Casual": "from-purple-500 to-pink-500",
     };
     return colors[type] || "from-gray-500 to-slate-500";
   };
