@@ -71,18 +71,6 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {/* Search Bar - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-md mx-8">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Search jobs, companies..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#B260E6] focus:border-transparent outline-none transition-all bg-gray-50 hover:bg-white"
-              />
-            </div>
-          </div>
-
           {/* Desktop Auth Buttons / User Menu */}
           <div className="hidden lg:flex items-center space-x-3">
             {isLoggedIn ? (
@@ -143,15 +131,6 @@ export default function Navbar() {
 
           {/* Mobile menu button */}
           <div className="flex lg:hidden items-center space-x-2">
-            {/* Mobile Search Icon */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-600 md:hidden"
-            >
-              <Search className="h-5 w-5" />
-            </Button>
-
             <Button
               variant="ghost"
               size="icon"
@@ -164,18 +143,6 @@ export default function Navbar() {
                 <Menu className="h-6 w-6" />
               )}
             </Button>
-          </div>
-        </div>
-
-        {/* Mobile Search Bar */}
-        <div className="md:hidden pb-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <input
-              type="text"
-              placeholder="Search jobs, companies..."
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#B260E6] focus:border-transparent outline-none transition-all bg-gray-50"
-            />
           </div>
         </div>
       </div>
