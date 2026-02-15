@@ -78,7 +78,6 @@ export default function JobsPage() {
     status: "active",
     salaryMin: "",
     salaryMax: "",
-    salaryPeriod: "year",
   });
 
   const fetchJobs = useCallback(async () => {
@@ -132,7 +131,6 @@ export default function JobsPage() {
       status: "active",
       salaryMin: "",
       salaryMax: "",
-      salaryPeriod: "year",
     });
     setIsDialogOpen(true);
   };
@@ -150,7 +148,6 @@ export default function JobsPage() {
       status: job.status,
       salaryMin: job.salary?.min?.toString() || "",
       salaryMax: job.salary?.max?.toString() || "",
-      salaryPeriod: job.salary?.period || "year",
     });
     setIsDialogOpen(true);
   };
@@ -191,7 +188,7 @@ export default function JobsPage() {
           min: formData.salaryMin ? parseInt(formData.salaryMin) : undefined,
           max: formData.salaryMax ? parseInt(formData.salaryMax) : undefined,
           currency: "AUD",
-          period: formData.salaryPeriod,
+          period: "hour",
         };
       }
 
@@ -436,13 +433,13 @@ export default function JobsPage() {
                   required
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="salaryMin">Salary Min (AUD)</Label>
+                  <Label htmlFor="salaryMin">Hourly Rate Min (AUD)</Label>
                   <Input
                     id="salaryMin"
                     type="number"
-                    placeholder="e.g., 80000"
+                    placeholder="e.g., 25"
                     value={formData.salaryMin}
                     onChange={(e) =>
                       setFormData({ ...formData, salaryMin: e.target.value })
@@ -450,34 +447,16 @@ export default function JobsPage() {
                   />
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="salaryMax">Salary Max (AUD)</Label>
+                  <Label htmlFor="salaryMax">Hourly Rate Max (AUD)</Label>
                   <Input
                     id="salaryMax"
                     type="number"
-                    placeholder="e.g., 120000"
+                    placeholder="e.g., 40"
                     value={formData.salaryMax}
                     onChange={(e) =>
                       setFormData({ ...formData, salaryMax: e.target.value })
                     }
                   />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="salaryPeriod">Period</Label>
-                  <Select
-                    value={formData.salaryPeriod}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, salaryPeriod: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="year">Per Year</SelectItem>
-                      <SelectItem value="month">Per Month</SelectItem>
-                      <SelectItem value="hour">Per Hour</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
             </div>

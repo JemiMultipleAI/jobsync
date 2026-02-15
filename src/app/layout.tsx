@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { Geist,  Geist_Mono  } from "next/font/google"
+import Script from "next/script";
 import "./globals.css";
 import ConditionalNavbar from "@/components/ConditionalNavbar";
 import ConditionalFooter from "@/components/ConditionalFooter";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import ElevenLabsConvAI from "@/components/ElevenLabsConvAI";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -47,6 +49,7 @@ export default function RootLayout({
           {children}
           <ConditionalFooter />
           <Toaster position="top-right" richColors />
+          <ElevenLabsConvAI />
         {/* <iframe
           src="https://jobsync.gcucsstudent.site/"
           style={{
@@ -63,6 +66,10 @@ export default function RootLayout({
           allow="microphone; camera; autoplay"
         ></iframe> */}
         </ErrorBoundary>
+        <Script
+          src="https://unpkg.com/@elevenlabs/convai-widget-embed"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );

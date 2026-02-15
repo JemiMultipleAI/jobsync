@@ -78,7 +78,6 @@ export default function EmployerJobsPage() {
     status: "active",
     salaryMin: "",
     salaryMax: "",
-    salaryPeriod: "year",
   });
 
   const fetchUserCompany = useCallback(async () => {
@@ -156,7 +155,6 @@ export default function EmployerJobsPage() {
       status: "active",
       salaryMin: "",
       salaryMax: "",
-      salaryPeriod: "year",
     });
     setIsDialogOpen(true);
   };
@@ -174,7 +172,6 @@ export default function EmployerJobsPage() {
       status: job.status,
       salaryMin: job.salary?.min?.toString() || "",
       salaryMax: job.salary?.max?.toString() || "",
-      salaryPeriod: job.salary?.period || "year",
     });
     setIsDialogOpen(true);
   };
@@ -220,7 +217,7 @@ export default function EmployerJobsPage() {
           min: formData.salaryMin ? parseInt(formData.salaryMin) : undefined,
           max: formData.salaryMax ? parseInt(formData.salaryMax) : undefined,
           currency: "AUD",
-          period: formData.salaryPeriod,
+          period: "hour",
         };
       }
 
@@ -488,11 +485,11 @@ export default function EmployerJobsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label>Salary (Optional)</Label>
-                <div className="grid grid-cols-3 gap-4">
+                <Label>Hourly Rate (Optional)</Label>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="salaryMin" className="text-xs">
-                      Min (AUD)
+                      Min Hourly Rate (AUD)
                     </Label>
                     <Input
                       id="salaryMin"
@@ -501,12 +498,12 @@ export default function EmployerJobsPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, salaryMin: e.target.value })
                       }
-                      placeholder="50000"
+                      placeholder="25"
                     />
                   </div>
                   <div>
                     <Label htmlFor="salaryMax" className="text-xs">
-                      Max (AUD)
+                      Max Hourly Rate (AUD)
                     </Label>
                     <Input
                       id="salaryMax"
@@ -515,28 +512,8 @@ export default function EmployerJobsPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, salaryMax: e.target.value })
                       }
-                      placeholder="80000"
+                      placeholder="40"
                     />
-                  </div>
-                  <div>
-                    <Label htmlFor="salaryPeriod" className="text-xs">
-                      Period
-                    </Label>
-                    <Select
-                      value={formData.salaryPeriod}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, salaryPeriod: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="year">Per Year</SelectItem>
-                        <SelectItem value="month">Per Month</SelectItem>
-                        <SelectItem value="hour">Per Hour</SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
                 </div>
               </div>
